@@ -1,8 +1,9 @@
 #ifndef GMODEL_HPP
 #define GMODEL_HPP
 
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
+#include <vector>
 
 namespace gmod {
 
@@ -70,16 +71,15 @@ void print_simple_object(FILE* f, struct object* obj);
 void write_closure_to_geo(struct object* obj, char const* filename);
 
 void print_object_dmg(FILE* f, struct object* obj);
-unsigned count_of_type(struct object** objs, unsigned n, enum type type);
-unsigned count_of_dim(struct object** objs, unsigned n, unsigned dim);
+unsigned count_of_type(std::vector<object*> const& objs, enum type type);
+unsigned count_of_dim(std::vector<object*> const& objs, unsigned dim);
 void print_closure_dmg(FILE* f, struct object* obj);
 
 void write_closure_to_dmg(struct object* obj, char const* filename);
 
 void add_use(struct object* by, enum use_dir dir, struct object* of);
 void add_helper(struct object* to, struct object* h);
-void get_closure(struct object* obj, unsigned include_helpers,
-    struct object*** p_objs, unsigned* p_count);
+std::vector<object*> get_closure(struct object* obj, unsigned include_helpers);
 
 struct vector {double x, y, z;};
 struct matrix {struct vector x, y, z;}; /* columns, not rows ! */

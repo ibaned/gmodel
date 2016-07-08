@@ -1,4 +1,4 @@
-#include "gmodel.h"
+#include "gmodel.hpp"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -74,7 +74,7 @@ void init_object(struct object* obj, enum type type, dtor_t dtor)
 
 struct object* new_object(enum type type, dtor_t dtor)
 {
-  struct object* o = malloc(sizeof(*o));
+  struct object* o = new object;
   init_object(o, type, dtor);
   return o;
 }
@@ -87,7 +87,7 @@ void free_object(struct object* obj)
   for (unsigned i = 0; i < obj->nhelpers; ++i)
     drop_object(obj->helpers[i]);
   free(obj->helpers);
-  free(obj);
+  delete obj;
   --nlive_objects;
 }
 
@@ -133,16 +133,12 @@ void print_object_physical(FILE* f, struct object* obj)
 
 void print_closure(FILE* f, struct object* obj)
 {
-  struct object** closure;
-  unsigned closure_size;
-  get_closure(obj, 1, &closure, &closure_size);
-  for (unsigned i = 0; i < closure_size; ++i)
-    print_object(f, closure[closure_size - i - 1]);
-  free(closure);
-  get_closure(obj, 0, &closure, &closure_size);
-  for (unsigned i = 0; i < closure_size; ++i)
-    print_object_physical(f, closure[closure_size - i - 1]);
-  free(closure);
+  auto closure = get_closure(obj, 1);
+  for (auto it = closure.rbegin(); it != closure.rend(); ++it)
+    print_object(f, *it);
+  closure = get_closure(obj, 0);
+  for (auto it = closure.rbegin(); it != closure.rend(); ++it)
+    print_object_physical(f, *it);
 }
 
 void write_closure_to_geo(struct object* obj, char const* filename)
@@ -206,16 +202,16 @@ void print_object_dmg(FILE* f, struct object* obj)
 #pragma clang diagnostic pop
 #endif
 
-unsigned count_of_type(struct object** objs, unsigned n, enum type type)
+unsigned count_of_type(std::vector<object*> const& objs, enum type type)
 {
   unsigned c = 0;
-  for (unsigned i = 0; i < n; ++i)
-    if (objs[i]->type == type)
+  for (auto obj : objs)
+    if (obj->type == type)
       ++c;
   return c;
 }
 
-unsigned count_of_dim(struct object** objs, unsigned n, unsigned dim)
+unsigned count_of_dim(std::vector<object*> const& objs, unsigned dim)
 {
   unsigned c = 0;
   for (unsigned i = 0; i < NTYPES; ++i)
@@ -226,18 +222,15 @@ unsigned count_of_dim(struct object** objs, unsigned n, unsigned dim)
 
 void print_closure_dmg(FILE* f, struct object* obj)
 {
-  struct object** closure;
-  unsigned closure_size;
-  get_closure(obj, 0, &closure, &closure_size);
+  auto closure = get_closure(obj, 0, &closure, &closure_size);
   fprintf(f, "%u %u %u %u\n",
-      count_of_dim(closure, closure_size, 3),
-      count_of_dim(closure, closure_size, 2),
-      count_of_dim(closure, closure_size, 1),
-      count_of_dim(closure, closure_size, 0));
+      count_of_dim(closure, 3),
+      count_of_dim(closure, 2),
+      count_of_dim(closure, 1),
+      count_of_dim(closure, 0));
   fprintf(f, "0 0 0\n0 0 0\n");
-  for (unsigned i = 0; i < closure_size; ++i)
-    print_object_dmg(f, closure[closure_size - i - 1]);
-  free(closure);
+  for (auto it = closure.rbegin(); it != closure.rend(); ++it)
+    print_object_dmg(f, *it);
 }
 
 void write_closure_to_dmg(struct object* obj, char const* filename)
@@ -263,20 +256,19 @@ void add_helper(struct object* to, struct object* h)
   grab_object(h);
 }
 
-void get_closure(struct object* obj, unsigned include_helpers,
-    struct object*** p_objs, unsigned* p_count)
+std::vector get_closure(struct object* obj, unsigned include_helpers)
 {
-  struct object** queue = malloc(nlive_objects * sizeof(struct object*));
-  unsigned first = 0;
-  unsigned end = 0;
-  queue[end++] = obj;
-  while (first != end) {
+  std::vector queue;
+  queue.reserve(nlive_objects);
+  std::size_t first = 0;
+  queue.push_back(obj);
+  while (first != queue.size()) {
     struct object* current = queue[first++];
     for (unsigned i = 0; i < current->nused; ++i) {
       struct object* child = current->used[i].obj;
       if (!child->visited) {
         child->visited = 1;
-        queue[end++] = child;
+        queue.push_back(child);
       }
     }
     if (include_helpers)
@@ -284,14 +276,13 @@ void get_closure(struct object* obj, unsigned include_helpers,
         struct object* child = current->helpers[i];
         if (!child->visited) {
           child->visited = 1;
-          queue[end++] = child;
+          queue.push_back(child);
         }
       }
   }
-  for (unsigned i = 0; i < end; ++i)
+  for (std::size_t i = 0; i < queue.size(); ++i)
     queue[i]->visited = 0;
-  *p_objs = realloc(queue, end * sizeof(struct object*));
-  *p_count = end;
+  return queue;
 }
 
 struct point* new_point(void)
