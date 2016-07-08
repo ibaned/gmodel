@@ -220,14 +220,14 @@ unsigned count_of_dim(std::vector<object*> const& objs, unsigned dim)
 {
   unsigned c = 0;
   for (unsigned i = 0; i < NTYPES; ++i)
-    if (is_entity(i) && type_dims[i] == dim)
-      c += count_of_type(objs, n, i);
+    if (is_entity(type(i)) && type_dims[i] == dim)
+      c += count_of_type(objs, type(i));
   return c;
 }
 
 void print_closure_dmg(FILE* f, struct object* obj)
 {
-  auto closure = get_closure(obj, 0, &closure, &closure_size);
+  auto closure = get_closure(obj, 0);
   fprintf(f, "%u %u %u %u\n",
       count_of_dim(closure, 3),
       count_of_dim(closure, 2),
