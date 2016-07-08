@@ -244,8 +244,8 @@ Extruded extrude_loop2(Object* start, Vector v,
 
 Object* new_circle(Vector center,
     Vector normal, Vector x);
-Object* new_polyline(Point** pts, unsigned npts);
-Object* new_polyline2(Vector* vs, unsigned npts);
+Object* new_polyline(std::vector<Point*> const& pts);
+Object* new_polyline2(std::vector<Vector> const& vs);
 
 Object* new_plane(void);
 Object* new_plane2(Object* loop);

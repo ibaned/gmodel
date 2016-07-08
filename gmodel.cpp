@@ -535,22 +535,19 @@ Object* new_circle(Vector center,
   return loop;
 }
 
-Object* new_polyline(Point** pts, unsigned npts)
+Object* new_polyline(std::vector<Point*> const& pts)
 {
-  Object* loop = new_loop();
-  for (unsigned i = 0; i < npts; ++i) {
-    Object* line = new_line2(pts[i], pts[(i + 1) % npts]);
+  auto loop = new_loop();
+  for (std::size_t i = 0; i < pts.size(); ++i) {
+    auto line = new_line2(pts[i], pts[(i + 1) % npts]);
     add_use(loop, FORWARD, line);
   }
   return loop;
 }
 
-Object* new_polyline2(Vector* vs, unsigned npts)
+Object* new_polyline2(std::vector<Vector> const& vs)
 {
-  Point** pts = new_points(vs, npts);
-  Object* out = new_polyline(pts, npts);
-  free(pts);
-  return out;
+  return new_polyline(new_points(vs));
 }
 
 Object* new_plane(void)
