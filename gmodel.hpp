@@ -4,9 +4,11 @@
 #include <math.h>
 #include <stdio.h>
 
-#define PI 3.14159265359
+namespace gmod {
 
-#define NTYPES 10
+constexpr double PI = 3.14159265359;
+
+enum { NTYPES = 10 };
 
 enum type {
   POINT    = 0,
@@ -302,5 +304,7 @@ void weld_volume_face_into(
     struct object* small_volume_face);
 
 struct vector eval(struct object* o, double const* param);
+
+} // end namespace gmod
 
 #endif

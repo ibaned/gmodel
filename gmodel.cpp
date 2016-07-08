@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+namespace gmod {
+
 char const* const type_names[NTYPES] = {
   [POINT]   = "Point",
   [LINE]    = "Line",
@@ -806,12 +808,12 @@ struct vector eval(struct object* o, double const* param)
         b = tmp;
         u = 1.0 - u;
         if (!are_parallel(cb, cm)) {
-          fprintf(stderr, "scimod only understands quarter ellipses,\n");
+          fprintf(stderr, "gmodel only understands quarter ellipses,\n");
           fprintf(stderr, "and this one has no endpoint on the major axis\n");
           abort();
         }
         if (!are_perpendicular(ca, cm)) {
-          fprintf(stderr, "scimod only understands quarter ellipses,\n");
+          fprintf(stderr, "gmodel only understands quarter ellipses,\n");
           fprintf(stderr, "and this one has no endpoint on the minor axis\n");
           abort();
         }
@@ -824,3 +826,5 @@ struct vector eval(struct object* o, double const* param)
     default: return (struct vector){-42,-42,-42};
   }
 }
+
+} // end namespace gmod
