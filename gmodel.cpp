@@ -187,13 +187,18 @@ void print_object_dmg(FILE* f, struct object* obj)
     case VOLUME: {
       fprintf(f, "%u %u\n", obj->id, obj->nused);
       for (unsigned i = 0; i < obj->nused; ++i) {
-        struct object* loop = obj->used[i].obj;
-        fprintf(f, " %u\n", loop->nused);
-        for (unsigned j = 0; j < loop->nused; ++j) {
-          struct use u = loop->used[j];
-          fprintf(f, "  %u %u\n", u.obj->id, !u.dir);
-        }
+        print_object_dmg(f, obj->used[i].obj);
       }
+    } break;
+    case LOOP:
+    case SHELL: {
+      fprintf(f, " %u\n", obj->nused);
+      for (unsigned j = 0; j < obj->nused; ++j) {
+        struct use u = obj->used[j];
+        fprintf(f, "  %u %u\n", u.obj->id, !u.dir);
+      }
+    } break;
+    case GROUP: {
     } break;
   }
 }
