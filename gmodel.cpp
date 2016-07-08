@@ -284,7 +284,7 @@ struct point* new_point(void)
 
 double default_size = 0.1;
 
-struct point* new_point2(struct vector v)
+struct point* new_point2(Vector v)
 {
   struct point* p = new_point();
   p->pos = v;
@@ -292,7 +292,7 @@ struct point* new_point2(struct vector v)
   return p;
 }
 
-struct point* new_point3(struct vector v, double size)
+struct point* new_point3(Vector v, double size)
 {
   struct point* p = new_point();
   p->pos = v;
@@ -300,7 +300,7 @@ struct point* new_point3(struct vector v, double size)
   return p;
 }
 
-struct point** new_points(struct vector* vs, unsigned n)
+struct point** new_points(Vector* vs, unsigned n)
 {
   struct point** out = malloc(n * sizeof(struct point*));
   for (unsigned i = 0; i < n; ++i)
@@ -314,7 +314,7 @@ void print_point(FILE* f, struct point* p)
       p->obj.id, p->pos.x, p->pos.y, p->pos.z, p->size);
 }
 
-struct extruded extrude_point(struct point* start, struct vector v)
+struct extruded extrude_point(struct point* start, Vector v)
 {
   struct point* end = new_point3(add_vectors(start->pos, v), start->size);
   Object* middle = new_line2(start, end);
@@ -339,7 +339,7 @@ Object* new_line2(struct point* start, struct point* end)
   return l;
 }
 
-Object* new_line3(struct vector origin, struct vector span)
+Object* new_line3(Vector origin, Vector span)
 {
   return extrude_point(new_point2(origin), span).middle;
 }
@@ -364,7 +364,7 @@ struct point* arc_center(Object* arc)
   return (struct point*) arc->helpers[0];
 }
 
-struct vector arc_normal(Object* arc)
+Vector arc_normal(Object* arc)
 {
   return normalize_vector(
       cross_product(
@@ -419,14 +419,14 @@ void print_ellipse(FILE* f, Object* e)
       edge_point(e, 1)->obj.id);
 }
 
-struct extruded extrude_edge(Object* start, struct vector v)
+struct extruded extrude_edge(Object* start, Vector v)
 {
   struct extruded left = extrude_point(edge_point(start, 0), v);
   struct extruded right = extrude_point(edge_point(start, 1), v);
   return extrude_edge2(start, v, left, right);
 }
 
-struct extruded extrude_edge2(Object* start, struct vector v,
+struct extruded extrude_edge2(Object* start, Vector v,
     struct extruded left, struct extruded right)
 {
   Object* loop = new_loop();
@@ -491,13 +491,13 @@ struct point** loop_points(Object* loop)
   return points;
 }
 
-struct extruded extrude_loop(Object* start, struct vector v)
+struct extruded extrude_loop(Object* start, Vector v)
 {
   Object* shell = new_shell();
   return extrude_loop2(start, v, shell, FORWARD);
 }
 
-struct extruded extrude_loop2(Object* start, struct vector v,
+struct extruded extrude_loop2(Object* start, Vector v,
     Object* shell, UseDir shell_dir)
 {
   Object* end = new_loop();
@@ -522,10 +522,10 @@ struct extruded extrude_loop2(Object* start, struct vector v,
   return (struct extruded){shell, end};
 }
 
-Object* new_circle(struct vector center,
-    struct vector normal, struct vector x)
+Object* new_circle(Vector center,
+    Vector normal, Vector x)
 {
-  struct matrix r = rotation_matrix(normal, PI / 2);
+  Matrix r = rotation_matrix(normal, PI / 2);
   struct point* center_point = new_point2(center);
   struct point* ring_points[4];
   for (unsigned i = 0; i < 4; ++i) {
@@ -551,7 +551,7 @@ Object* new_polyline(struct point** pts, unsigned npts)
   return loop;
 }
 
-Object* new_polyline2(struct vector* vs, unsigned npts)
+Object* new_polyline2(Vector* vs, unsigned npts)
 {
   struct point** pts = new_points(vs, npts);
   Object* out = new_polyline(pts, npts);
@@ -571,19 +571,19 @@ Object* new_plane2(Object* loop)
   return p;
 }
 
-Object* new_square(struct vector origin,
-    struct vector x, struct vector y)
+Object* new_square(Vector origin,
+    Vector x, Vector y)
 {
   return extrude_edge(new_line3(origin, x), y).middle;
 }
 
-Object* new_disk(struct vector center,
-    struct vector normal, struct vector x)
+Object* new_disk(Vector center,
+    Vector normal, Vector x)
 {
   return new_plane2(new_circle(center, normal, x));
 }
 
-Object* new_polygon(struct vector* vs, unsigned n)
+Object* new_polygon(Vector* vs, unsigned n)
 {
   return new_plane2(new_polyline2(vs, n));
 }
@@ -605,7 +605,7 @@ void add_hole_to_face(Object* face, Object* loop)
   add_use(face, REVERSE, loop);
 }
 
-struct extruded extrude_face(Object* face, struct vector v)
+struct extruded extrude_face(Object* face, Vector v)
 {
   Object* end;
   switch (face->type) {
@@ -640,13 +640,13 @@ void make_hemisphere(Object* circle,
     UseDir dir)
 {
   assert(circle->nused == 4);
-  struct vector normal = arc_normal(circle->used[0].obj);
+  Vector normal = arc_normal(circle->used[0].obj);
   if (dir == REVERSE)
     normal = scale_vector(-1, normal);
   struct point** circle_points = loop_points(circle);
   double radius = vector_norm(
       subtract_vectors(circle_points[0]->pos, center->pos));
-  struct vector cap_pos = add_vectors(center->pos,
+  Vector cap_pos = add_vectors(center->pos,
       scale_vector(radius, normal));
   struct point* cap = new_point2(cap_pos);
   Object* inward[4];
@@ -662,8 +662,8 @@ void make_hemisphere(Object* circle,
   }
 }
 
-Object* new_sphere(struct vector center,
-    struct vector normal, struct vector x)
+Object* new_sphere(Vector center,
+    Vector normal, Vector x)
 {
   Object* circle = new_circle(center, normal, x);
   struct point* cpt = arc_center(circle->used[0].obj);
@@ -691,8 +691,8 @@ Object* volume_shell(Object* v)
   return v->used[0].obj;
 }
 
-Object* new_cube(struct vector origin,
-    struct vector x, struct vector y, struct vector z)
+Object* new_cube(Vector origin,
+    Vector x, Vector y, Vector z)
 {
   return extrude_face(new_square(origin, x, y), z).middle;
 }
@@ -702,8 +702,8 @@ Object* get_cube_face(Object* cube, enum cube_face which)
   return cube->used[0].obj->used[which].obj;
 }
 
-Object* new_ball(struct vector center,
-    struct vector normal, struct vector x)
+Object* new_ball(Vector center,
+    Vector normal, Vector x)
 {
   return new_volume2(new_sphere(center, normal, x));
 }
@@ -735,19 +735,19 @@ void weld_volume_face_into(
       small_volume_face);
 }
 
-static int are_parallel(struct vector a, struct vector b)
+static int are_parallel(Vector a, Vector b)
 {
   return 1e-6 > (1.0 - fabs(dot_product(normalize_vector(a),
                                         normalize_vector(b))));
 }
 
-static int are_perpendicular(struct vector a, struct vector b)
+static int are_perpendicular(Vector a, Vector b)
 {
   return 1e-6 > (0.0 - fabs(dot_product(normalize_vector(a),
                                         normalize_vector(b))));
 }
 
-struct vector eval(Object* o, double const* param)
+Vector eval(Object* o, double const* param)
 {
   switch (o->type) {
     case POINT: {
@@ -766,9 +766,9 @@ struct vector eval(Object* o, double const* param)
       struct point* a = edge_point(o, 0);
       struct point* c = arc_center(o);
       struct point* b = edge_point(o, 1);
-      struct vector n = arc_normal(o);
-      struct vector ca = subtract_vectors(a->pos, c->pos);
-      struct vector cb = subtract_vectors(b->pos, c->pos);
+      Vector n = arc_normal(o);
+      Vector ca = subtract_vectors(a->pos, c->pos);
+      Vector cb = subtract_vectors(b->pos, c->pos);
       double full_ang = acos(dot_product(ca, cb) /
           (vector_norm(ca) * vector_norm(cb)));
       double ang = full_ang * u;
@@ -780,9 +780,9 @@ struct vector eval(Object* o, double const* param)
       struct point* c = ellipse_center(o);
       struct point* m = ellipse_major_pt(o);
       struct point* b = edge_point(o, 1);
-      struct vector ca = subtract_vectors(a->pos, c->pos);
-      struct vector cb = subtract_vectors(b->pos, c->pos);
-      struct vector cm = subtract_vectors(m->pos, c->pos);
+      Vector ca = subtract_vectors(a->pos, c->pos);
+      Vector cb = subtract_vectors(b->pos, c->pos);
+      Vector cm = subtract_vectors(m->pos, c->pos);
       if (!are_parallel(cb, cm)) {
         struct point* tmp = a;
         a = b;
@@ -804,7 +804,7 @@ struct vector eval(Object* o, double const* param)
       return add_vectors(c->pos, add_vectors(scale_vector(cos(ang), ca),
                                              scale_vector(sin(ang), cb)));
     }
-    default: return (struct vector){-42,-42,-42};
+    default: return (Vector){-42,-42,-42};
   }
 }
 

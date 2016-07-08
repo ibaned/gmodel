@@ -79,103 +79,103 @@ void add_use(Object* by, UseDir dir, Object* of);
 void add_helper(Object* to, Object* h);
 std::vector<object*> get_closure(Object* obj, unsigned include_helpers);
 
-struct vector {double x, y, z;};
-struct matrix {struct vector x, y, z;}; /* columns, not rows ! */
+struct Vector {double x, y, z;};
+struct Matrix {Vector x, y, z;}; /* columns, not rows ! */
 
-static inline struct vector add_vectors(
-    struct vector a, struct vector b)
+static inline Vector add_vectors(
+    Vector a, Vector b)
 {
-  return (struct vector){a.x + b.x, a.y + b.y, a.z + b.z};
+  return (Vector){a.x + b.x, a.y + b.y, a.z + b.z};
 }
 
-static inline struct vector subtract_vectors(
-    struct vector a, struct vector b)
+static inline Vector subtract_vectors(
+    Vector a, Vector b)
 {
-  return (struct vector){a.x - b.x, a.y - b.y, a.z - b.z};
+  return (Vector){a.x - b.x, a.y - b.y, a.z - b.z};
 }
 
-static inline struct vector scale_vector(
-    double a, struct vector b)
+static inline Vector scale_vector(
+    double a, Vector b)
 {
-  return (struct vector){a * b.x, a * b.y, a * b.z};
+  return (Vector){a * b.x, a * b.y, a * b.z};
 }
 
 static inline double dot_product(
-    struct vector a, struct vector b)
+    Vector a, Vector b)
 {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-static inline double vector_norm(struct vector a)
+static inline double vector_norm(Vector a)
 {
   return sqrt(dot_product(a, a));
 }
 
-static inline struct vector normalize_vector(struct vector v)
+static inline Vector normalize_vector(Vector v)
 {
   return scale_vector(1.0 / vector_norm(v), v);
 }
 
-static inline struct vector matrix_vector_product(
-    struct matrix a, struct vector b)
+static inline Vector matrix_vector_product(
+    Matrix a, Vector b)
 {
   return add_vectors(scale_vector(b.x, a.x),
          add_vectors(scale_vector(b.y, a.y),
                      scale_vector(b.z, a.z)));
 }
 
-static inline struct matrix cross_product_matrix(
-    struct vector a)
+static inline Matrix cross_product_matrix(
+    Vector a)
 {
-  return (struct matrix){
-    (struct vector){    0,  a.z, -a.y},
-    (struct vector){ -a.z,    0,  a.x},
-    (struct vector){  a.y, -a.x,    0}};
+  return (Matrix){
+    (Vector){    0,  a.z, -a.y},
+    (Vector){ -a.z,    0,  a.x},
+    (Vector){  a.y, -a.x,    0}};
 }
 
-static inline struct vector cross_product(
-    struct vector a, struct vector b)
+static inline Vector cross_product(
+    Vector a, Vector b)
 {
   return matrix_vector_product(
       cross_product_matrix(a), b);
 }
 
-static inline struct matrix tensor_product_matrix(
-    struct vector a, struct vector b)
+static inline Matrix tensor_product_matrix(
+    Vector a, Vector b)
 {
-  return (struct matrix){
+  return (Matrix){
     scale_vector(b.x, a),
     scale_vector(b.y, a),
     scale_vector(b.z, a)};
 }
 
-static inline struct matrix identity_matrix(void)
+static inline Matrix identity_matrix(void)
 {
-  return (struct matrix){
-    (struct vector){1,0,0},
-    (struct vector){0,1,0},
-    (struct vector){0,0,1}};
+  return (Matrix){
+    (Vector){1,0,0},
+    (Vector){0,1,0},
+    (Vector){0,0,1}};
 }
 
-static inline struct matrix scale_matrix(double a,
-    struct matrix b)
+static inline Matrix scale_matrix(double a,
+    Matrix b)
 {
-  return (struct matrix){
+  return (Matrix){
     scale_vector(a, b.x),
     scale_vector(a, b.y),
     scale_vector(a, b.z)};
 }
 
-static inline struct matrix add_matrices(
-    struct matrix a, struct matrix b)
+static inline Matrix add_matrices(
+    Matrix a, Matrix b)
 {
-  return (struct matrix){
+  return (Matrix){
     add_vectors(a.x, b.x),
     add_vectors(a.y, b.y),
     add_vectors(a.z, b.z)};
 }
 
-static inline struct matrix rotation_matrix(struct vector axis, double angle)
+static inline Matrix rotation_matrix(Vector axis, double angle)
 {
   return add_matrices(scale_matrix(cos(angle), identity_matrix()),
          add_matrices(scale_matrix(sin(angle), cross_product_matrix(axis)),
@@ -183,24 +183,24 @@ static inline struct matrix rotation_matrix(struct vector axis, double angle)
                                    tensor_product_matrix(axis, axis))));
 }
 
-static inline struct vector rotate_vector(struct vector axis, double angle,
-    struct vector v)
+static inline Vector rotate_vector(Vector axis, double angle,
+    Vector v)
 {
   return matrix_vector_product(rotation_matrix(axis, angle), v);
 }
 
 struct point {
   Object obj;
-  struct vector pos;
+  Vector pos;
   double size;
 };
 
 extern double default_size;
 
 struct point* new_point(void);
-struct point* new_point2(struct vector v);
-struct point* new_point3(struct vector v, double size);
-struct point** new_points(struct vector* vs, unsigned n);
+struct point* new_point2(Vector v);
+struct point* new_point3(Vector v, double size);
+struct point** new_points(Vector* vs, unsigned n);
 
 void print_point(FILE* f, struct point* p);
 
@@ -209,18 +209,18 @@ struct extruded {
   Object* end;
 };
 
-struct extruded extrude_point(struct point* start, struct vector v);
+struct extruded extrude_point(struct point* start, Vector v);
 struct point* edge_point(Object* edge, unsigned i);
 
 Object* new_line(void);
 Object* new_line2(struct point* start, struct point* end);
-Object* new_line3(struct vector origin, struct vector span);
+Object* new_line3(Vector origin, Vector span);
 
 Object* new_arc(void);
 Object* new_arc2(struct point* start, struct point* center,
     struct point* end);
 struct point* arc_center(Object* arc);
-struct vector arc_normal(Object* arc);
+Vector arc_normal(Object* arc);
 void print_arc(FILE* f, Object* arc);
 
 Object* new_ellipse(void);
@@ -230,35 +230,35 @@ struct point* ellipse_center(Object* e);
 struct point* ellipse_major_pt(Object* e);
 void print_ellipse(FILE* f, Object* e);
 
-struct extruded extrude_edge(Object* start, struct vector v);
-struct extruded extrude_edge2(Object* start, struct vector v,
+struct extruded extrude_edge(Object* start, Vector v);
+struct extruded extrude_edge2(Object* start, Vector v,
     struct extruded left, struct extruded right);
 
 Object* new_loop(void);
 struct point** loop_points(Object* loop);
-struct extruded extrude_loop(Object* start, struct vector v);
-struct extruded extrude_loop2(Object* start, struct vector v,
+struct extruded extrude_loop(Object* start, Vector v);
+struct extruded extrude_loop2(Object* start, Vector v,
     Object* shell, UseDir shell_dir);
 
-Object* new_circle(struct vector center,
-    struct vector normal, struct vector x);
+Object* new_circle(Vector center,
+    Vector normal, Vector x);
 Object* new_polyline(struct point** pts, unsigned npts);
-Object* new_polyline2(struct vector* vs, unsigned npts);
+Object* new_polyline2(Vector* vs, unsigned npts);
 
 Object* new_plane(void);
 Object* new_plane2(Object* loop);
 
-Object* new_square(struct vector origin,
-    struct vector x, struct vector y);
-Object* new_disk(struct vector center,
-    struct vector normal, struct vector x);
-Object* new_polygon(struct vector* vs, unsigned n);
+Object* new_square(Vector origin,
+    Vector x, Vector y);
+Object* new_disk(Vector center,
+    Vector normal, Vector x);
+Object* new_polygon(Vector* vs, unsigned n);
 
 Object* new_ruled(void);
 Object* new_ruled2(Object* loop);
 
 void add_hole_to_face(Object* face, Object* loop);
-struct extruded extrude_face(Object* face, struct vector v);
+struct extruded extrude_face(Object* face, Vector v);
 Object* face_loop(Object* face);
 
 Object* new_shell(void);
@@ -266,15 +266,15 @@ Object* new_shell(void);
 void make_hemisphere(Object* circle,
     struct point* center, Object* shell,
     UseDir dir);
-Object* new_sphere(struct vector center,
-    struct vector normal, struct vector x);
+Object* new_sphere(Vector center,
+    Vector normal, Vector x);
 
 Object* new_volume(void);
 Object* new_volume2(Object* shell);
 Object* volume_shell(Object* v);
 
-Object* new_cube(struct vector origin,
-    struct vector x, struct vector y, struct vector z);
+Object* new_cube(Vector origin,
+    Vector x, Vector y, Vector z);
 
 enum cube_face {
   BOTTOM,
@@ -287,8 +287,8 @@ enum cube_face {
 
 Object* get_cube_face(Object* cube, enum cube_face which);
 
-Object* new_ball(struct vector center,
-    struct vector normal, struct vector x);
+Object* new_ball(Vector center,
+    Vector normal, Vector x);
 
 void insert_into(Object* into, Object* f);
 
@@ -301,7 +301,7 @@ void weld_volume_face_into(
     Object* big_volume_face,
     Object* small_volume_face);
 
-struct vector eval(Object* o, double const* param);
+Vector eval(Object* o, double const* param);
 
 } // end namespace gmod
 
