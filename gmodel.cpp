@@ -424,7 +424,7 @@ Extruded extrude_edge(Object* start, Vector v)
 Extruded extrude_edge2(Object* start, Vector v,
     Extruded left, Extruded right)
 {
-  Object* loop = new_loop();
+  auto loop = new_loop();
   add_use(loop, FORWARD, start);
   add_use(loop, FORWARD, right.middle);
   Object* end = 0;
@@ -539,7 +539,7 @@ Object* new_polyline(std::vector<Point*> const& pts)
 {
   auto loop = new_loop();
   for (std::size_t i = 0; i < pts.size(); ++i) {
-    auto line = new_line2(pts[i], pts[(i + 1) % npts]);
+    auto line = new_line2(pts[i], pts[(i + 1) % pts.size()]);
     add_use(loop, FORWARD, line);
   }
   return loop;
@@ -574,9 +574,9 @@ Object* new_disk(Vector center,
   return new_plane2(new_circle(center, normal, x));
 }
 
-Object* new_polygon(Vector* vs, unsigned n)
+Object* new_polygon(std::vector<Vector> vs)
 {
-  return new_plane2(new_polyline2(vs, n));
+  return new_plane2(new_polyline2(vs));
 }
 
 Object* new_ruled()
@@ -602,18 +602,17 @@ Extruded extrude_face(Object* face, Vector v)
   switch (face->type) {
     case PLANE: end = new_plane(); break;
     case RULED: end = new_ruled(); break;
-    default: end = 0; break;
+    default: end = nullptr; break;
   }
-  Object* shell = new_shell();
+  auto shell = new_shell();
   add_use(shell, REVERSE, face);
   add_use(shell, FORWARD, end);
-  for (unsigned i = 0; i < face->nused; ++i) {
-    Object* end_loop = extrude_loop2(face->used[i].obj, v,
-        shell, face->used[i].dir).end;
-    add_use(end, face->used[i].dir, end_loop);
+  for (auto use : face->used) {
+    auto end_loop = extrude_loop2(use.obj, v, shell, use.dir).end;
+    add_use(end, use.dir, end_loop);
   }
-  Object* middle = new_volume2(shell);
-  return (Extruded){middle, end};
+  auto middle = new_volume2(shell);
+  return Extruded{middle, end};
 }
 
 Object* face_loop(Object* face)
@@ -628,24 +627,23 @@ Object* new_shell()
 
 void make_hemisphere(Object* circle,
     Point* center, Object* shell,
-    UseDir dir)
+    int dir)
 {
-  assert(circle->nused == 4);
+  assert(circle->used.size() == 4);
   Vector normal = arc_normal(circle->used[0].obj);
   if (dir == REVERSE)
     normal = scale_vector(-1, normal);
-  Point** circle_points = loop_points(circle);
+  auto circle_points = loop_points(circle);
   double radius = vector_norm(
       subtract_vectors(circle_points[0]->pos, center->pos));
   Vector cap_pos = add_vectors(center->pos,
       scale_vector(radius, normal));
   Point* cap = new_point2(cap_pos);
   Object* inward[4];
-  for (unsigned i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
     inward[i] = new_arc2(circle_points[i], center, cap);
-  free(circle_points);
-  for (unsigned i = 0; i < 4; ++i) {
-    Object* loop = new_loop();
+  for (std::size_t i = 0; i < 4; ++i) {
+    auto loop = new_loop();
     add_use(loop, circle->used[i].dir ^ dir, circle->used[i].obj);
     add_use(loop, FORWARD ^ dir, inward[(i + 1) % 4]);
     add_use(loop, REVERSE ^ dir, inward[i]);
