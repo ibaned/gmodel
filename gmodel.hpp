@@ -11,7 +11,7 @@ constexpr double PI = 3.14159265359;
 
 enum { NTYPES = 10 };
 
-enum Type {
+enum {
   POINT    = 0,
   LINE     = 1,
   ARC      = 2,
@@ -28,10 +28,10 @@ extern char const* const type_names[NTYPES];
 extern char const* const physical_type_names[NTYPES];
 extern unsigned const type_dims[NTYPES];
 
-unsigned is_entity(Type t);
-unsigned is_boundary(Type t);
+unsigned is_entity(int t);
+unsigned is_boundary(int t);
 
-enum UseDir {
+enum {
   FORWARD = 0,
   REVERSE = 1,
 };
@@ -39,12 +39,12 @@ enum UseDir {
 struct Object;
 
 struct Use {
-  UseDir dir;
+  int dir;
   Object* obj;
 };
 
 struct Object {
-  Type type;
+  int type;
   unsigned id;
   unsigned ref_count;
   std::vector<Use> used;
@@ -55,13 +55,13 @@ struct Object {
 
 typedef void (*dtor_t)(Object* obj);
 
-void init_object(Object* obj, Type type, dtor_t dtor);
-Object* new_object(Type type, dtor_t dtor);
+void init_object(Object* obj, int type, dtor_t dtor);
+Object* new_object(int type, dtor_t dtor);
 void free_object(Object* obj);
 void grab_object(Object* obj);
 void drop_object(Object* obj);
 
-UseDir get_used_dir(Object* user, Object* used);
+int get_used_dir(Object* user, Object* used);
 
 void print_object(FILE* f, Object* obj);
 void print_object_physical(FILE* f, Object* obj);
@@ -71,13 +71,13 @@ void print_simple_object(FILE* f, Object* obj);
 void write_closure_to_geo(Object* obj, char const* filename);
 
 void print_object_dmg(FILE* f, Object* obj);
-unsigned count_of_type(std::vector<Object*> const& objs, Type type);
+unsigned count_of_type(std::vector<Object*> const& objs, int type);
 unsigned count_of_dim(std::vector<Object*> const& objs, unsigned dim);
 void print_closure_dmg(FILE* f, Object* obj);
 
 void write_closure_to_dmg(Object* obj, char const* filename);
 
-void add_use(Object* by, UseDir dir, Object* of);
+void add_use(Object* by, int dir, Object* of);
 void add_helper(Object* to, Object* h);
 std::vector<Object*> get_closure(Object* obj, unsigned include_helpers);
 
@@ -240,7 +240,7 @@ Object* new_loop(void);
 std::vector<Point*> loop_points(Object* loop);
 Extruded extrude_loop(Object* start, Vector v);
 Extruded extrude_loop2(Object* start, Vector v,
-    Object* shell, UseDir shell_dir);
+    Object* shell, int shell_dir);
 
 Object* new_circle(Vector center,
     Vector normal, Vector x);
@@ -267,7 +267,7 @@ Object* new_shell(void);
 
 void make_hemisphere(Object* circle,
     Point* center, Object* shell,
-    UseDir dir);
+    int dir);
 Object* new_sphere(Vector center,
     Vector normal, Vector x);
 

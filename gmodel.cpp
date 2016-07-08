@@ -46,12 +46,12 @@ unsigned const type_dims[NTYPES] = {
   [GROUP]   = 0
 };
 
-unsigned is_entity(Type t)
+unsigned is_entity(int t)
 {
   return t <= VOLUME;
 }
 
-unsigned is_boundary(Type t)
+unsigned is_boundary(int t)
 {
   return t == LOOP || t == SHELL;
 }
@@ -59,7 +59,7 @@ unsigned is_boundary(Type t)
 static unsigned next_id = 0;
 static unsigned nlive_objects = 0;
 
-void init_object(Object* obj, Type type, dtor_t dtor)
+void init_object(Object* obj, int type, dtor_t dtor)
 {
   obj->type = type;
   obj->id = next_id++;
@@ -69,7 +69,7 @@ void init_object(Object* obj, Type type, dtor_t dtor)
   ++nlive_objects;
 }
 
-Object* new_object(Type type, dtor_t dtor)
+Object* new_object(int type, dtor_t dtor)
 {
   Object* o = new Object;
   init_object(o, type, dtor);
@@ -99,7 +99,7 @@ void drop_object(Object* obj)
     obj->dtor(obj);
 }
 
-UseDir get_used_dir(Object* user, Object* used)
+int get_used_dir(Object* user, Object* used)
 {
   auto it = std::find_if(user->used.begin(), user->used.end(),
       [=](Use u){return u.obj == used;});
@@ -193,7 +193,7 @@ void print_object_dmg(FILE* f, Object* obj)
   }
 }
 
-unsigned count_of_type(std::vector<Object*> const& objs, Type type)
+unsigned count_of_type(std::vector<Object*> const& objs, int type)
 {
   unsigned c = 0;
   for (auto obj : objs)
@@ -205,9 +205,9 @@ unsigned count_of_type(std::vector<Object*> const& objs, Type type)
 unsigned count_of_dim(std::vector<Object*> const& objs, unsigned dim)
 {
   unsigned c = 0;
-  for (unsigned i = 0; i < NTYPES; ++i)
-    if (is_entity(Type(i)) && type_dims[i] == dim)
-      c += count_of_type(objs, Type(i));
+  for (int i = 0; i < NTYPES; ++i)
+    if (is_entity(i) && type_dims[i] == dim)
+      c += count_of_type(objs, i);
   return c;
 }
 
@@ -231,7 +231,7 @@ void write_closure_to_dmg(Object* obj, char const* filename)
   fclose(f);
 }
 
-void add_use(Object* by, UseDir dir, Object* of)
+void add_use(Object* by, int dir, Object* of)
 {
   by->used.push_back(Use{dir, of});
   grab_object(of);
@@ -493,7 +493,7 @@ Extruded extrude_loop(Object* start, Vector v)
 }
 
 Extruded extrude_loop2(Object* start, Vector v,
-    Object* shell, UseDir shell_dir)
+    Object* shell, int shell_dir)
 {
   Object* end = new_loop();
   std::vector<Point*> start_points = loop_points(start);
@@ -513,7 +513,7 @@ Extruded extrude_loop2(Object* start, Vector v,
     add_use(end, start->used[i].dir, edge_extrusions[i].end);
   for (std::size_t i = 0; i < n; ++i)
     add_use(shell, start->used[i].dir ^ shell_dir, edge_extrusions[i].middle);
-  return (Extruded){shell, end};
+  return Extruded{shell, end};
 }
 
 Object* new_circle(Vector center,
