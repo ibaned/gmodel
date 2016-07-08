@@ -1,8 +1,9 @@
 #include "gmodel.hpp"
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstdio>
+#include <algorithm>
 
 namespace gmod {
 
@@ -70,7 +71,7 @@ void init_object(Object* obj, Type type, dtor_t dtor)
 
 Object* new_object(Type type, dtor_t dtor)
 {
-  Object* o = new object;
+  Object* o = new Object;
   init_object(o, type, dtor);
   return o;
 }
@@ -78,7 +79,7 @@ Object* new_object(Type type, dtor_t dtor)
 void free_object(Object* obj)
 {
   for (auto use : obj->used)
-    drop_object(use.obj)
+    drop_object(use.obj);
   for (auto helper : obj->helpers)
     drop_object(helper);
   delete obj;
@@ -100,10 +101,10 @@ void drop_object(Object* obj)
 
 UseDir get_used_dir(Object* user, Object* used)
 {
-  for (unsigned i = 0; i < user->nused; ++i)
-    if (user->used[i].obj == used)
-      return user->used[i].dir;
-  assert(0);
+  auto it = std::find_if(user->used.begin(), user->used.end(),
+      [=](Use u){return u.obj == used;});
+  assert(it != user->used.end());
+  return it->dir;
 }
 
 void print_object(FILE* f, Object* obj)
@@ -145,13 +146,14 @@ void write_closure_to_geo(Object* obj, char const* filename)
 void print_simple_object(FILE* f, Object* obj)
 {
   fprintf(f, "%s(%u) = {", type_names[obj->type], obj->id);
-  for (unsigned i = 0; i < obj->nused; ++i) {
-    if (i)
-      fprintf(f, ",");
-    if (is_boundary(obj->type) && obj->used[i].dir == REVERSE)
-      fprintf(f, "%d", -((int)(obj->used[i].obj->id)));
+  bool first = false;
+  for (auto use : obj->used) {
+    if (!first) fprintf(f, ",");
+    if (is_boundary(obj->type) && use.dir == REVERSE)
+      fprintf(f, "%d", -((int)(use.obj->id)));
     else
-      fprintf(f, "%u", obj->used[i].obj->id);
+      fprintf(f, "%u", use.obj->id);
+    if (first) first = false;
   }
   fprintf(f, "};\n");
 }
@@ -174,16 +176,15 @@ void print_object_dmg(FILE* f, Object* obj)
     case PLANE:
     case RULED:
     case VOLUME: {
-      fprintf(f, "%u %u\n", obj->id, obj->nused);
-      for (unsigned i = 0; i < obj->nused; ++i) {
-        print_object_dmg(f, obj->used[i].obj);
+      fprintf(f, "%u %zu\n", obj->id, obj->used.size());
+      for (auto use : obj->used) {
+        print_object_dmg(f, use.obj);
       }
     } break;
     case LOOP:
     case SHELL: {
-      fprintf(f, " %u\n", obj->nused);
-      for (unsigned j = 0; j < obj->nused; ++j) {
-        Use u = obj->used[j];
+      fprintf(f, " %zu\n", obj->used.size());
+      for (auto u : obj->used) {
         fprintf(f, "  %u %u\n", u.obj->id, !u.dir);
       }
     } break;
@@ -192,7 +193,7 @@ void print_object_dmg(FILE* f, Object* obj)
   }
 }
 
-unsigned count_of_type(std::vector<object*> const& objs, Type type)
+unsigned count_of_type(std::vector<Object*> const& objs, Type type)
 {
   unsigned c = 0;
   for (auto obj : objs)
@@ -201,12 +202,12 @@ unsigned count_of_type(std::vector<object*> const& objs, Type type)
   return c;
 }
 
-unsigned count_of_dim(std::vector<object*> const& objs, unsigned dim)
+unsigned count_of_dim(std::vector<Object*> const& objs, unsigned dim)
 {
   unsigned c = 0;
   for (unsigned i = 0; i < NTYPES; ++i)
-    if (is_entity(type(i)) && type_dims[i] == dim)
-      c += count_of_type(objs, type(i));
+    if (is_entity(Type(i)) && type_dims[i] == dim)
+      c += count_of_type(objs, Type(i));
   return c;
 }
 
@@ -232,38 +233,33 @@ void write_closure_to_dmg(Object* obj, char const* filename)
 
 void add_use(Object* by, UseDir dir, Object* of)
 {
-  ++by->nused;
-  by->used = realloc(by->used, by->nused * sizeof(Use));
-  by->used[by->nused - 1] = (Use){dir, of};
+  by->used.push_back(Use{dir, of});
   grab_object(of);
 }
 
 void add_helper(Object* to, Object* h)
 {
-  ++to->nhelpers;
-  to->helpers = realloc(to->helpers, to->nhelpers * sizeof(Object*));
-  to->helpers[to->nhelpers - 1] = h;
+  to->helpers.push_back(h);
   grab_object(h);
 }
 
-std::vector get_closure(Object* obj, unsigned include_helpers)
+std::vector<Object*> get_closure(Object* obj, unsigned include_helpers)
 {
-  std::vector queue;
+  std::vector<Object*> queue;
   queue.reserve(nlive_objects);
   std::size_t first = 0;
   queue.push_back(obj);
   while (first != queue.size()) {
     Object* current = queue[first++];
-    for (unsigned i = 0; i < current->nused; ++i) {
-      Object* child = current->used[i].obj;
+    for (auto use : current->used) {
+      auto child = use.obj;
       if (!child->visited) {
         child->visited = 1;
         queue.push_back(child);
       }
     }
     if (include_helpers)
-      for (unsigned i = 0; i < current->nhelpers; ++i) {
-        Object* child = current->helpers[i];
+      for (auto child : current->helpers) {
         if (!child->visited) {
           child->visited = 1;
           queue.push_back(child);

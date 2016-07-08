@@ -36,6 +36,8 @@ enum UseDir {
   REVERSE = 1,
 };
 
+struct Object;
+
 struct Use {
   UseDir dir;
   Object* obj;
@@ -45,8 +47,8 @@ struct Object {
   Type type;
   unsigned id;
   unsigned ref_count;
-  std::vector<use> used;
-  std::vector<object*> helpers;
+  std::vector<Use> used;
+  std::vector<Object*> helpers;
   void (*dtor)(Object* o);
   unsigned visited;
 };
@@ -69,15 +71,15 @@ void print_simple_object(FILE* f, Object* obj);
 void write_closure_to_geo(Object* obj, char const* filename);
 
 void print_object_dmg(FILE* f, Object* obj);
-unsigned count_of_type(std::vector<object*> const& objs, Type type);
-unsigned count_of_dim(std::vector<object*> const& objs, unsigned dim);
+unsigned count_of_type(std::vector<Object*> const& objs, Type type);
+unsigned count_of_dim(std::vector<Object*> const& objs, unsigned dim);
 void print_closure_dmg(FILE* f, Object* obj);
 
 void write_closure_to_dmg(Object* obj, char const* filename);
 
 void add_use(Object* by, UseDir dir, Object* of);
 void add_helper(Object* to, Object* h);
-std::vector<object*> get_closure(Object* obj, unsigned include_helpers);
+std::vector<Object*> get_closure(Object* obj, unsigned include_helpers);
 
 struct Vector {double x, y, z;};
 struct Matrix {Vector x, y, z;}; /* columns, not rows ! */
