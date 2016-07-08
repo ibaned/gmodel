@@ -1,4 +1,4 @@
-#include "scimod.h"
+#include "gmodel.h"
 
 #include <assert.h>
 #include <stdlib.h>
