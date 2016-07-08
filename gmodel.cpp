@@ -110,7 +110,7 @@ UseDir get_used_dir(Object* user, Object* used)
 void print_object(FILE* f, Object* obj)
 {
   switch (obj->type) {
-    case POINT: print_point(f, (struct point*)obj); break;
+    case POINT: print_point(f, (Point*)obj); break;
     case ARC: print_arc(f, obj); break;
     case ELLIPSE: print_ellipse(f, obj); break;
     case GROUP: break;
@@ -162,7 +162,7 @@ void print_object_dmg(FILE* f, Object* obj)
 {
   switch (obj->type) {
     case POINT: {
-      struct point* p = (struct point*) obj;
+      Point* p = (Point*) obj;
       fprintf(f, "%u %f %f %f\n", obj->id,
           p->pos.x, p->pos.y, p->pos.z);
     } break;
@@ -271,55 +271,55 @@ std::vector<Object*> get_closure(Object* obj, unsigned include_helpers)
   return queue;
 }
 
-struct point* new_point(void)
+Point* new_point(void)
 {
-  struct point* p = malloc(sizeof(struct point));
+  Point* p = malloc(sizeof(Point));
   init_object(&p->obj, POINT, free_object);
   return p;
 }
 
 double default_size = 0.1;
 
-struct point* new_point2(Vector v)
+Point* new_point2(Vector v)
 {
-  struct point* p = new_point();
+  Point* p = new_point();
   p->pos = v;
   p->size = default_size;
   return p;
 }
 
-struct point* new_point3(Vector v, double size)
+Point* new_point3(Vector v, double size)
 {
-  struct point* p = new_point();
+  Point* p = new_point();
   p->pos = v;
   p->size = size;
   return p;
 }
 
-struct point** new_points(Vector* vs, unsigned n)
+Point** new_points(Vector* vs, unsigned n)
 {
-  struct point** out = malloc(n * sizeof(struct point*));
+  Point** out = malloc(n * sizeof(Point*));
   for (unsigned i = 0; i < n; ++i)
     out[i] = new_point2(vs[i]);
   return out;
 }
 
-void print_point(FILE* f, struct point* p)
+void print_point(FILE* f, Point* p)
 {
   fprintf(f, "Point(%u) = {%f,%f,%f,%f};\n",
       p->obj.id, p->pos.x, p->pos.y, p->pos.z, p->size);
 }
 
-struct extruded extrude_point(struct point* start, Vector v)
+struct extruded extrude_point(Point* start, Vector v)
 {
-  struct point* end = new_point3(add_vectors(start->pos, v), start->size);
+  Point* end = new_point3(add_vectors(start->pos, v), start->size);
   Object* middle = new_line2(start, end);
   return (struct extruded){middle, &end->obj};
 }
 
-struct point* edge_point(Object* edge, unsigned i)
+Point* edge_point(Object* edge, unsigned i)
 {
-  return (struct point*) edge->used[i].obj;
+  return (Point*) edge->used[i].obj;
 }
 
 Object* new_line(void)
@@ -327,7 +327,7 @@ Object* new_line(void)
   return new_object(LINE, free_object);
 }
 
-Object* new_line2(struct point* start, struct point* end)
+Object* new_line2(Point* start, Point* end)
 {
   Object* l = new_line();
   add_use(l, FORWARD, &start->obj);
@@ -345,8 +345,8 @@ Object* new_arc(void)
   return new_object(ARC, free_object);
 }
 
-Object* new_arc2(struct point* start, struct point* center,
-    struct point* end)
+Object* new_arc2(Point* start, Point* center,
+    Point* end)
 {
   Object* a = new_arc();
   add_use(a, FORWARD, &start->obj);
@@ -355,9 +355,9 @@ Object* new_arc2(struct point* start, struct point* center,
   return a;
 }
 
-struct point* arc_center(Object* arc)
+Point* arc_center(Object* arc)
 {
-  return (struct point*) arc->helpers[0];
+  return (Point*) arc->helpers[0];
 }
 
 Vector arc_normal(Object* arc)
@@ -385,8 +385,8 @@ Object* new_ellipse(void)
   return new_object(ELLIPSE, free_object);
 }
 
-Object* new_ellipse2(struct point* start, struct point* center,
-    struct point* major_pt, struct point* end)
+Object* new_ellipse2(Point* start, Point* center,
+    Point* major_pt, Point* end)
 {
   Object* e = new_ellipse();
   add_use(e, FORWARD, &start->obj);
@@ -396,14 +396,14 @@ Object* new_ellipse2(struct point* start, struct point* center,
   return e;
 }
 
-struct point* ellipse_center(Object* e)
+Point* ellipse_center(Object* e)
 {
-  return (struct point*) e->helpers[0];
+  return (Point*) e->helpers[0];
 }
 
-struct point* ellipse_major_pt(Object* e)
+Point* ellipse_major_pt(Object* e)
 {
-  return (struct point*) e->helpers[1];
+  return (Point*) e->helpers[1];
 }
 
 void print_ellipse(FILE* f, Object* e)
@@ -432,32 +432,32 @@ struct extruded extrude_edge2(Object* start, Vector v,
   switch (start->type) {
     case LINE: {
       end = new_line2(
-          (struct point*) left.end,
-          (struct point*) right.end);
+          (Point*) left.end,
+          (Point*) right.end);
       break;
     }
     case ARC: {
-      struct point* start_center = arc_center(start);
-      struct point* end_center = new_point3(
+      Point* start_center = arc_center(start);
+      Point* end_center = new_point3(
           add_vectors(start_center->pos, v), start_center->size);
       end = new_arc2(
-          (struct point*) left.end,
+          (Point*) left.end,
           end_center,
-          (struct point*) right.end);
+          (Point*) right.end);
       break;
     }
     case ELLIPSE: {
-      struct point* start_center = ellipse_center(start);
-      struct point* end_center = new_point3(
+      Point* start_center = ellipse_center(start);
+      Point* end_center = new_point3(
           add_vectors(start_center->pos, v), start_center->size);
-      struct point* start_major_pt = ellipse_major_pt(start);
-      struct point* end_major_pt = new_point3(
+      Point* start_major_pt = ellipse_major_pt(start);
+      Point* end_major_pt = new_point3(
           add_vectors(start_major_pt->pos, v), start_major_pt->size);
       end = new_ellipse2(
-          (struct point*) left.end,
+          (Point*) left.end,
           end_center,
           end_major_pt,
-          (struct point*) right.end);
+          (Point*) right.end);
       break;
     }
     default: end = 0; break;
@@ -479,9 +479,9 @@ Object* new_loop(void)
   return new_object(LOOP, free_object);
 }
 
-struct point** loop_points(Object* loop)
+Point** loop_points(Object* loop)
 {
-  struct point** points = malloc(sizeof(struct point*) * loop->nused);
+  Point** points = malloc(sizeof(Point*) * loop->nused);
   for (unsigned i = 0; i < loop->nused; ++i)
     points[i] = edge_point(loop->used[i].obj, loop->used[i].dir);
   return points;
@@ -497,7 +497,7 @@ struct extruded extrude_loop2(Object* start, Vector v,
     Object* shell, UseDir shell_dir)
 {
   Object* end = new_loop();
-  struct point** start_points = loop_points(start);
+  Point** start_points = loop_points(start);
   struct extruded* point_extrusions = malloc(
       sizeof(struct extruded) * start->nused);
   for (unsigned i = 0; i < start->nused; ++i)
@@ -522,8 +522,8 @@ Object* new_circle(Vector center,
     Vector normal, Vector x)
 {
   Matrix r = rotation_matrix(normal, PI / 2);
-  struct point* center_point = new_point2(center);
-  struct point* ring_points[4];
+  Point* center_point = new_point2(center);
+  Point* ring_points[4];
   for (unsigned i = 0; i < 4; ++i) {
     ring_points[i] = new_point2(add_vectors(center, x));
     x = matrix_vector_product(r, x);
@@ -537,7 +537,7 @@ Object* new_circle(Vector center,
   return loop;
 }
 
-Object* new_polyline(struct point** pts, unsigned npts)
+Object* new_polyline(Point** pts, unsigned npts)
 {
   Object* loop = new_loop();
   for (unsigned i = 0; i < npts; ++i) {
@@ -549,7 +549,7 @@ Object* new_polyline(struct point** pts, unsigned npts)
 
 Object* new_polyline2(Vector* vs, unsigned npts)
 {
-  struct point** pts = new_points(vs, npts);
+  Point** pts = new_points(vs, npts);
   Object* out = new_polyline(pts, npts);
   free(pts);
   return out;
@@ -632,19 +632,19 @@ Object* new_shell(void)
 }
 
 void make_hemisphere(Object* circle,
-    struct point* center, Object* shell,
+    Point* center, Object* shell,
     UseDir dir)
 {
   assert(circle->nused == 4);
   Vector normal = arc_normal(circle->used[0].obj);
   if (dir == REVERSE)
     normal = scale_vector(-1, normal);
-  struct point** circle_points = loop_points(circle);
+  Point** circle_points = loop_points(circle);
   double radius = vector_norm(
       subtract_vectors(circle_points[0]->pos, center->pos));
   Vector cap_pos = add_vectors(center->pos,
       scale_vector(radius, normal));
-  struct point* cap = new_point2(cap_pos);
+  Point* cap = new_point2(cap_pos);
   Object* inward[4];
   for (unsigned i = 0; i < 4; ++i)
     inward[i] = new_arc2(circle_points[i], center, cap);
@@ -662,7 +662,7 @@ Object* new_sphere(Vector center,
     Vector normal, Vector x)
 {
   Object* circle = new_circle(center, normal, x);
-  struct point* cpt = arc_center(circle->used[0].obj);
+  Point* cpt = arc_center(circle->used[0].obj);
   Object* shell = new_shell();
   make_hemisphere(circle, cpt, shell, FORWARD);
   make_hemisphere(circle, cpt, shell, REVERSE);
@@ -747,21 +747,21 @@ Vector eval(Object* o, double const* param)
 {
   switch (o->type) {
     case POINT: {
-      struct point* p = (struct point*) o;
+      Point* p = (Point*) o;
       return p->pos;
     }
     case LINE: {
       double u = param[0];
-      struct point* a = edge_point(o, 0);
-      struct point* b = edge_point(o, 1);
+      Point* a = edge_point(o, 0);
+      Point* b = edge_point(o, 1);
       return add_vectors(scale_vector(1.0 - u, a->pos),
                          scale_vector(      u, b->pos));
     }
     case ARC: {
       double u = param[0];
-      struct point* a = edge_point(o, 0);
-      struct point* c = arc_center(o);
-      struct point* b = edge_point(o, 1);
+      Point* a = edge_point(o, 0);
+      Point* c = arc_center(o);
+      Point* b = edge_point(o, 1);
       Vector n = arc_normal(o);
       Vector ca = subtract_vectors(a->pos, c->pos);
       Vector cb = subtract_vectors(b->pos, c->pos);
@@ -772,15 +772,15 @@ Vector eval(Object* o, double const* param)
     }
     case ELLIPSE: {
       double u = param[0];
-      struct point* a = edge_point(o, 0);
-      struct point* c = ellipse_center(o);
-      struct point* m = ellipse_major_pt(o);
-      struct point* b = edge_point(o, 1);
+      Point* a = edge_point(o, 0);
+      Point* c = ellipse_center(o);
+      Point* m = ellipse_major_pt(o);
+      Point* b = edge_point(o, 1);
       Vector ca = subtract_vectors(a->pos, c->pos);
       Vector cb = subtract_vectors(b->pos, c->pos);
       Vector cm = subtract_vectors(m->pos, c->pos);
       if (!are_parallel(cb, cm)) {
-        struct point* tmp = a;
+        Point* tmp = a;
         a = b;
         b = tmp;
         u = 1.0 - u;

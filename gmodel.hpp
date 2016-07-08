@@ -191,7 +191,7 @@ static inline Vector rotate_vector(Vector axis, double angle,
   return matrix_vector_product(rotation_matrix(axis, angle), v);
 }
 
-struct point {
+struct Point {
   Object obj;
   Vector pos;
   double size;
@@ -199,37 +199,37 @@ struct point {
 
 extern double default_size;
 
-struct point* new_point(void);
-struct point* new_point2(Vector v);
-struct point* new_point3(Vector v, double size);
-struct point** new_points(Vector* vs, unsigned n);
+Point* new_point(void);
+Point* new_point2(Vector v);
+Point* new_point3(Vector v, double size);
+Point** new_points(Vector* vs, unsigned n);
 
-void print_point(FILE* f, struct point* p);
+void print_point(FILE* f, Point* p);
 
 struct extruded {
   Object* middle;
   Object* end;
 };
 
-struct extruded extrude_point(struct point* start, Vector v);
-struct point* edge_point(Object* edge, unsigned i);
+struct extruded extrude_point(Point* start, Vector v);
+Point* edge_point(Object* edge, unsigned i);
 
 Object* new_line(void);
-Object* new_line2(struct point* start, struct point* end);
+Object* new_line2(Point* start, Point* end);
 Object* new_line3(Vector origin, Vector span);
 
 Object* new_arc(void);
-Object* new_arc2(struct point* start, struct point* center,
-    struct point* end);
-struct point* arc_center(Object* arc);
+Object* new_arc2(Point* start, Point* center,
+    Point* end);
+Point* arc_center(Object* arc);
 Vector arc_normal(Object* arc);
 void print_arc(FILE* f, Object* arc);
 
 Object* new_ellipse(void);
-Object* new_ellipse2(struct point* start, struct point* center,
-    struct point* major_pt, struct point* end);
-struct point* ellipse_center(Object* e);
-struct point* ellipse_major_pt(Object* e);
+Object* new_ellipse2(Point* start, Point* center,
+    Point* major_pt, Point* end);
+Point* ellipse_center(Object* e);
+Point* ellipse_major_pt(Object* e);
 void print_ellipse(FILE* f, Object* e);
 
 struct extruded extrude_edge(Object* start, Vector v);
@@ -237,14 +237,14 @@ struct extruded extrude_edge2(Object* start, Vector v,
     struct extruded left, struct extruded right);
 
 Object* new_loop(void);
-struct point** loop_points(Object* loop);
+Point** loop_points(Object* loop);
 struct extruded extrude_loop(Object* start, Vector v);
 struct extruded extrude_loop2(Object* start, Vector v,
     Object* shell, UseDir shell_dir);
 
 Object* new_circle(Vector center,
     Vector normal, Vector x);
-Object* new_polyline(struct point** pts, unsigned npts);
+Object* new_polyline(Point** pts, unsigned npts);
 Object* new_polyline2(Vector* vs, unsigned npts);
 
 Object* new_plane(void);
@@ -266,7 +266,7 @@ Object* face_loop(Object* face);
 Object* new_shell(void);
 
 void make_hemisphere(Object* circle,
-    struct point* center, Object* shell,
+    Point* center, Object* shell,
     UseDir dir);
 Object* new_sphere(Vector center,
     Vector normal, Vector x);
