@@ -503,6 +503,7 @@ Extruded extrude_loop2(Object* start, Vector v,
     point_extrusions.push_back(extrude_point(start_point, v));
   std::vector<Extruded> edge_extrusions;
   for (std::size_t i = 0; i < n; ++i) {
+    auto use = start->used[i];
     edge_extrusions.push_back(
         extrude_edge2(use.obj, v,
           point_extrusions[(i + (use.dir ^ 0)) % n],
