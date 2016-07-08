@@ -55,8 +55,8 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH True)
 
 add_library(gmodel gmodel.cpp)
 
-add_executable(cylinder cylinder.cpp)
-target_link_libraries(cylinder gmodel)
+# add_executable(cylinder cylinder.cpp)
+# target_link_libraries(cylinder gmodel)
 
 install(FILES
   "${PROJECT_SOURCE_DIR}/gmodel.hpp"
