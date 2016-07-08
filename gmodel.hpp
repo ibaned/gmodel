@@ -151,7 +151,7 @@ static inline Matrix tensor_product_matrix(
     scale_vector(b.z, a)};
 }
 
-static inline Matrix identity_matrix(void)
+static inline Matrix identity_matrix()
 {
   return (Matrix){
     (Vector){1,0,0},
@@ -199,7 +199,7 @@ struct Point {
 
 extern double default_size;
 
-Point* new_point(void);
+Point* new_point();
 Point* new_point2(Vector v);
 Point* new_point3(Vector v, double size);
 std::vector<Point*> new_points(std::vector<Vector> vs);
@@ -214,18 +214,18 @@ struct Extruded {
 Extruded extrude_point(Point* start, Vector v);
 Point* edge_point(Object* edge, unsigned i);
 
-Object* new_line(void);
+Object* new_line();
 Object* new_line2(Point* start, Point* end);
 Object* new_line3(Vector origin, Vector span);
 
-Object* new_arc(void);
+Object* new_arc();
 Object* new_arc2(Point* start, Point* center,
     Point* end);
 Point* arc_center(Object* arc);
 Vector arc_normal(Object* arc);
 void print_arc(FILE* f, Object* arc);
 
-Object* new_ellipse(void);
+Object* new_ellipse();
 Object* new_ellipse2(Point* start, Point* center,
     Point* major_pt, Point* end);
 Point* ellipse_center(Object* e);
@@ -236,7 +236,7 @@ Extruded extrude_edge(Object* start, Vector v);
 Extruded extrude_edge2(Object* start, Vector v,
     Extruded left, Extruded right);
 
-Object* new_loop(void);
+Object* new_loop();
 std::vector<Point*> loop_points(Object* loop);
 Extruded extrude_loop(Object* start, Vector v);
 Extruded extrude_loop2(Object* start, Vector v,
@@ -247,7 +247,7 @@ Object* new_circle(Vector center,
 Object* new_polyline(std::vector<Point*> const& pts);
 Object* new_polyline2(std::vector<Vector> const& vs);
 
-Object* new_plane(void);
+Object* new_plane();
 Object* new_plane2(Object* loop);
 
 Object* new_square(Vector origin,
@@ -256,14 +256,14 @@ Object* new_disk(Vector center,
     Vector normal, Vector x);
 Object* new_polygon(Vector* vs, unsigned n);
 
-Object* new_ruled(void);
+Object* new_ruled();
 Object* new_ruled2(Object* loop);
 
 void add_hole_to_face(Object* face, Object* loop);
 Extruded extrude_face(Object* face, Vector v);
 Object* face_loop(Object* face);
 
-Object* new_shell(void);
+Object* new_shell();
 
 void make_hemisphere(Object* circle,
     Point* center, Object* shell,
@@ -271,7 +271,7 @@ void make_hemisphere(Object* circle,
 Object* new_sphere(Vector center,
     Vector normal, Vector x);
 
-Object* new_volume(void);
+Object* new_volume();
 Object* new_volume2(Object* shell);
 Object* volume_shell(Object* v);
 
@@ -294,7 +294,7 @@ Object* new_ball(Vector center,
 
 void insert_into(Object* into, Object* f);
 
-Object* new_group(void);
+Object* new_group();
 void add_to_group(Object* group, Object* o);
 
 void weld_volume_face_into(

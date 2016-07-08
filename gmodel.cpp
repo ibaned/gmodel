@@ -271,7 +271,7 @@ std::vector<Object*> get_closure(Object* obj, unsigned include_helpers)
   return queue;
 }
 
-Point* new_point(void)
+Point* new_point()
 {
   Point* p = new Point;
   init_object(&p->obj, POINT, free_object);
@@ -321,7 +321,7 @@ Point* edge_point(Object* edge, unsigned i)
   return (Point*) edge->used[i].obj;
 }
 
-Object* new_line(void)
+Object* new_line()
 {
   return new_object(LINE, free_object);
 }
@@ -339,7 +339,7 @@ Object* new_line3(Vector origin, Vector span)
   return extrude_point(new_point2(origin), span).middle;
 }
 
-Object* new_arc(void)
+Object* new_arc()
 {
   return new_object(ARC, free_object);
 }
@@ -379,7 +379,7 @@ void print_arc(FILE* f, Object* arc)
       edge_point(arc, 1)->obj.id);
 }
 
-Object* new_ellipse(void)
+Object* new_ellipse()
 {
   return new_object(ELLIPSE, free_object);
 }
@@ -473,7 +473,7 @@ Extruded extrude_edge2(Object* start, Vector v,
   return (Extruded){middle, end};
 }
 
-Object* new_loop(void)
+Object* new_loop()
 {
   return new_object(LOOP, free_object);
 }
@@ -550,7 +550,7 @@ Object* new_polyline2(std::vector<Vector> const& vs)
   return new_polyline(new_points(vs));
 }
 
-Object* new_plane(void)
+Object* new_plane()
 {
   return new_object(PLANE, free_object);
 }
@@ -579,7 +579,7 @@ Object* new_polygon(Vector* vs, unsigned n)
   return new_plane2(new_polyline2(vs, n));
 }
 
-Object* new_ruled(void)
+Object* new_ruled()
 {
   return new_object(RULED, free_object);
 }
@@ -621,7 +621,7 @@ Object* face_loop(Object* face)
   return face->used[0].obj;
 }
 
-Object* new_shell(void)
+Object* new_shell()
 {
   return new_object(SHELL, free_object);
 }
@@ -665,7 +665,7 @@ Object* new_sphere(Vector center,
   return shell;
 }
 
-Object* new_volume(void)
+Object* new_volume()
 {
   return new_object(VOLUME, free_object);
 }
@@ -704,7 +704,7 @@ void insert_into(Object* into, Object* o)
   add_use(into, REVERSE, o->used[0].obj);
 }
 
-Object* new_group(void)
+Object* new_group()
 {
   return new_object(GROUP, free_object);
 }
