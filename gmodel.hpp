@@ -11,7 +11,7 @@ constexpr double PI = 3.14159265359;
 
 enum { NTYPES = 10 };
 
-enum type {
+enum Type {
   POINT    = 0,
   LINE     = 1,
   ARC      = 2,
@@ -28,58 +28,56 @@ extern char const* const type_names[NTYPES];
 extern char const* const physical_type_names[NTYPES];
 extern unsigned const type_dims[NTYPES];
 
-unsigned is_entity(enum type t);
-unsigned is_boundary(enum type t);
+unsigned is_entity(Type t);
+unsigned is_boundary(Type t);
 
-enum use_dir {
+enum UseDir {
   FORWARD = 0,
   REVERSE = 1,
 };
 
-struct use {
-  enum use_dir dir;
-  struct object* obj;
+struct Use {
+  UseDir dir;
+  Object* obj;
 };
 
-struct object {
-  enum type type;
+struct Object {
+  Type type;
   unsigned id;
   unsigned ref_count;
-  unsigned nused;
-  struct use* used;
-  unsigned nhelpers;
-  struct object** helpers;
-  void (*dtor)(struct object* o);
+  std::vector<use> used;
+  std::vector<object*> helpers;
+  void (*dtor)(Object* o);
   unsigned visited;
 };
 
-typedef void (*dtor_t)(struct object* obj);
+typedef void (*dtor_t)(Object* obj);
 
-void init_object(struct object* obj, enum type type, dtor_t dtor);
-struct object* new_object(enum type type, dtor_t dtor);
-void free_object(struct object* obj);
-void grab_object(struct object* obj);
-void drop_object(struct object* obj);
+void init_object(Object* obj, Type type, dtor_t dtor);
+Object* new_object(Type type, dtor_t dtor);
+void free_object(Object* obj);
+void grab_object(Object* obj);
+void drop_object(Object* obj);
 
-enum use_dir get_used_dir(struct object* user, struct object* used);
+UseDir get_used_dir(Object* user, Object* used);
 
-void print_object(FILE* f, struct object* obj);
-void print_object_physical(FILE* f, struct object* obj);
-void print_closure(FILE* f, struct object* obj);
-void print_simple_object(FILE* f, struct object* obj);
+void print_object(FILE* f, Object* obj);
+void print_object_physical(FILE* f, Object* obj);
+void print_closure(FILE* f, Object* obj);
+void print_simple_object(FILE* f, Object* obj);
 
-void write_closure_to_geo(struct object* obj, char const* filename);
+void write_closure_to_geo(Object* obj, char const* filename);
 
-void print_object_dmg(FILE* f, struct object* obj);
-unsigned count_of_type(std::vector<object*> const& objs, enum type type);
+void print_object_dmg(FILE* f, Object* obj);
+unsigned count_of_type(std::vector<object*> const& objs, Type type);
 unsigned count_of_dim(std::vector<object*> const& objs, unsigned dim);
-void print_closure_dmg(FILE* f, struct object* obj);
+void print_closure_dmg(FILE* f, Object* obj);
 
-void write_closure_to_dmg(struct object* obj, char const* filename);
+void write_closure_to_dmg(Object* obj, char const* filename);
 
-void add_use(struct object* by, enum use_dir dir, struct object* of);
-void add_helper(struct object* to, struct object* h);
-std::vector<object*> get_closure(struct object* obj, unsigned include_helpers);
+void add_use(Object* by, UseDir dir, Object* of);
+void add_helper(Object* to, Object* h);
+std::vector<object*> get_closure(Object* obj, unsigned include_helpers);
 
 struct vector {double x, y, z;};
 struct matrix {struct vector x, y, z;}; /* columns, not rows ! */
@@ -192,7 +190,7 @@ static inline struct vector rotate_vector(struct vector axis, double angle,
 }
 
 struct point {
-  struct object obj;
+  Object obj;
   struct vector pos;
   double size;
 };
@@ -207,75 +205,75 @@ struct point** new_points(struct vector* vs, unsigned n);
 void print_point(FILE* f, struct point* p);
 
 struct extruded {
-  struct object* middle;
-  struct object* end;
+  Object* middle;
+  Object* end;
 };
 
 struct extruded extrude_point(struct point* start, struct vector v);
-struct point* edge_point(struct object* edge, unsigned i);
+struct point* edge_point(Object* edge, unsigned i);
 
-struct object* new_line(void);
-struct object* new_line2(struct point* start, struct point* end);
-struct object* new_line3(struct vector origin, struct vector span);
+Object* new_line(void);
+Object* new_line2(struct point* start, struct point* end);
+Object* new_line3(struct vector origin, struct vector span);
 
-struct object* new_arc(void);
-struct object* new_arc2(struct point* start, struct point* center,
+Object* new_arc(void);
+Object* new_arc2(struct point* start, struct point* center,
     struct point* end);
-struct point* arc_center(struct object* arc);
-struct vector arc_normal(struct object* arc);
-void print_arc(FILE* f, struct object* arc);
+struct point* arc_center(Object* arc);
+struct vector arc_normal(Object* arc);
+void print_arc(FILE* f, Object* arc);
 
-struct object* new_ellipse(void);
-struct object* new_ellipse2(struct point* start, struct point* center,
+Object* new_ellipse(void);
+Object* new_ellipse2(struct point* start, struct point* center,
     struct point* major_pt, struct point* end);
-struct point* ellipse_center(struct object* e);
-struct point* ellipse_major_pt(struct object* e);
-void print_ellipse(FILE* f, struct object* e);
+struct point* ellipse_center(Object* e);
+struct point* ellipse_major_pt(Object* e);
+void print_ellipse(FILE* f, Object* e);
 
-struct extruded extrude_edge(struct object* start, struct vector v);
-struct extruded extrude_edge2(struct object* start, struct vector v,
+struct extruded extrude_edge(Object* start, struct vector v);
+struct extruded extrude_edge2(Object* start, struct vector v,
     struct extruded left, struct extruded right);
 
-struct object* new_loop(void);
-struct point** loop_points(struct object* loop);
-struct extruded extrude_loop(struct object* start, struct vector v);
-struct extruded extrude_loop2(struct object* start, struct vector v,
-    struct object* shell, enum use_dir shell_dir);
+Object* new_loop(void);
+struct point** loop_points(Object* loop);
+struct extruded extrude_loop(Object* start, struct vector v);
+struct extruded extrude_loop2(Object* start, struct vector v,
+    Object* shell, UseDir shell_dir);
 
-struct object* new_circle(struct vector center,
+Object* new_circle(struct vector center,
     struct vector normal, struct vector x);
-struct object* new_polyline(struct point** pts, unsigned npts);
-struct object* new_polyline2(struct vector* vs, unsigned npts);
+Object* new_polyline(struct point** pts, unsigned npts);
+Object* new_polyline2(struct vector* vs, unsigned npts);
 
-struct object* new_plane(void);
-struct object* new_plane2(struct object* loop);
+Object* new_plane(void);
+Object* new_plane2(Object* loop);
 
-struct object* new_square(struct vector origin,
+Object* new_square(struct vector origin,
     struct vector x, struct vector y);
-struct object* new_disk(struct vector center,
+Object* new_disk(struct vector center,
     struct vector normal, struct vector x);
-struct object* new_polygon(struct vector* vs, unsigned n);
+Object* new_polygon(struct vector* vs, unsigned n);
 
-struct object* new_ruled(void);
-struct object* new_ruled2(struct object* loop);
+Object* new_ruled(void);
+Object* new_ruled2(Object* loop);
 
-void add_hole_to_face(struct object* face, struct object* loop);
-struct extruded extrude_face(struct object* face, struct vector v);
-struct object* face_loop(struct object* face);
+void add_hole_to_face(Object* face, Object* loop);
+struct extruded extrude_face(Object* face, struct vector v);
+Object* face_loop(Object* face);
 
-struct object* new_shell(void);
+Object* new_shell(void);
 
-void make_hemisphere(struct object* circle,
-    struct point* center, struct object* shell,
-    enum use_dir dir);
-struct object* new_sphere(struct vector center,
+void make_hemisphere(Object* circle,
+    struct point* center, Object* shell,
+    UseDir dir);
+Object* new_sphere(struct vector center,
     struct vector normal, struct vector x);
 
-struct object* new_volume(void);
-struct object* new_volume2(struct object* shell);
-struct object* volume_shell(struct object* v);
+Object* new_volume(void);
+Object* new_volume2(Object* shell);
+Object* volume_shell(Object* v);
 
-struct object* new_cube(struct vector origin,
+Object* new_cube(struct vector origin,
     struct vector x, struct vector y, struct vector z);
 
 enum cube_face {
@@ -287,23 +285,23 @@ enum cube_face {
   LEFT
 };
 
-struct object* get_cube_face(struct object* cube, enum cube_face which);
+Object* get_cube_face(Object* cube, enum cube_face which);
 
-struct object* new_ball(struct vector center,
+Object* new_ball(struct vector center,
     struct vector normal, struct vector x);
 
-void insert_into(struct object* into, struct object* f);
+void insert_into(Object* into, Object* f);
 
-struct object* new_group(void);
-void add_to_group(struct object* group, struct object* o);
+Object* new_group(void);
+void add_to_group(Object* group, Object* o);
 
 void weld_volume_face_into(
-    struct object* big_volume,
-    struct object* small_volume,
-    struct object* big_volume_face,
-    struct object* small_volume_face);
+    Object* big_volume,
+    Object* small_volume,
+    Object* big_volume_face,
+    Object* small_volume_face);
 
-struct vector eval(struct object* o, double const* param);
+struct vector eval(Object* o, double const* param);
 
 } // end namespace gmod
 
