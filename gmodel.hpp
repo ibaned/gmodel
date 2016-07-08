@@ -202,16 +202,16 @@ extern double default_size;
 Point* new_point(void);
 Point* new_point2(Vector v);
 Point* new_point3(Vector v, double size);
-Point** new_points(Vector* vs, unsigned n);
+std::vector<Point*> new_points(std::vector<Vector> vs);
 
 void print_point(FILE* f, Point* p);
 
-struct extruded {
+struct Extruded {
   Object* middle;
   Object* end;
 };
 
-struct extruded extrude_point(Point* start, Vector v);
+Extruded extrude_point(Point* start, Vector v);
 Point* edge_point(Object* edge, unsigned i);
 
 Object* new_line(void);
@@ -232,14 +232,14 @@ Point* ellipse_center(Object* e);
 Point* ellipse_major_pt(Object* e);
 void print_ellipse(FILE* f, Object* e);
 
-struct extruded extrude_edge(Object* start, Vector v);
-struct extruded extrude_edge2(Object* start, Vector v,
-    struct extruded left, struct extruded right);
+Extruded extrude_edge(Object* start, Vector v);
+Extruded extrude_edge2(Object* start, Vector v,
+    Extruded left, Extruded right);
 
 Object* new_loop(void);
-Point** loop_points(Object* loop);
-struct extruded extrude_loop(Object* start, Vector v);
-struct extruded extrude_loop2(Object* start, Vector v,
+std::vector<Point*> loop_points(Object* loop);
+Extruded extrude_loop(Object* start, Vector v);
+Extruded extrude_loop2(Object* start, Vector v,
     Object* shell, UseDir shell_dir);
 
 Object* new_circle(Vector center,
@@ -260,7 +260,7 @@ Object* new_ruled(void);
 Object* new_ruled2(Object* loop);
 
 void add_hole_to_face(Object* face, Object* loop);
-struct extruded extrude_face(Object* face, Vector v);
+Extruded extrude_face(Object* face, Vector v);
 Object* face_loop(Object* face);
 
 Object* new_shell(void);

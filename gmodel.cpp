@@ -273,7 +273,7 @@ std::vector<Object*> get_closure(Object* obj, unsigned include_helpers)
 
 Point* new_point(void)
 {
-  Point* p = malloc(sizeof(Point));
+  Point* p = new Point;
   init_object(&p->obj, POINT, free_object);
   return p;
 }
@@ -296,11 +296,10 @@ Point* new_point3(Vector v, double size)
   return p;
 }
 
-Point** new_points(Vector* vs, unsigned n)
+std::vector<Point*> new_points(std::vector<Vector> vs)
 {
-  Point** out = malloc(n * sizeof(Point*));
-  for (unsigned i = 0; i < n; ++i)
-    out[i] = new_point2(vs[i]);
+  std::vector<Point*> out;
+  for (auto vec : vs) out.push_back(new_point2(vec));
   return out;
 }
 
@@ -310,11 +309,11 @@ void print_point(FILE* f, Point* p)
       p->obj.id, p->pos.x, p->pos.y, p->pos.z, p->size);
 }
 
-struct extruded extrude_point(Point* start, Vector v)
+Extruded extrude_point(Point* start, Vector v)
 {
   Point* end = new_point3(add_vectors(start->pos, v), start->size);
   Object* middle = new_line2(start, end);
-  return (struct extruded){middle, &end->obj};
+  return (Extruded){middle, &end->obj};
 }
 
 Point* edge_point(Object* edge, unsigned i)
@@ -415,15 +414,15 @@ void print_ellipse(FILE* f, Object* e)
       edge_point(e, 1)->obj.id);
 }
 
-struct extruded extrude_edge(Object* start, Vector v)
+Extruded extrude_edge(Object* start, Vector v)
 {
-  struct extruded left = extrude_point(edge_point(start, 0), v);
-  struct extruded right = extrude_point(edge_point(start, 1), v);
+  Extruded left = extrude_point(edge_point(start, 0), v);
+  Extruded right = extrude_point(edge_point(start, 1), v);
   return extrude_edge2(start, v, left, right);
 }
 
-struct extruded extrude_edge2(Object* start, Vector v,
-    struct extruded left, struct extruded right)
+Extruded extrude_edge2(Object* start, Vector v,
+    Extruded left, Extruded right)
 {
   Object* loop = new_loop();
   add_use(loop, FORWARD, start);
@@ -471,7 +470,7 @@ struct extruded extrude_edge2(Object* start, Vector v,
     case ELLIPSE: middle = new_ruled2(loop); break;
     default: middle = 0; break;
   }
-  return (struct extruded){middle, end};
+  return (Extruded){middle, end};
 }
 
 Object* new_loop(void)
@@ -479,43 +478,41 @@ Object* new_loop(void)
   return new_object(LOOP, free_object);
 }
 
-Point** loop_points(Object* loop)
+std::vector<Point*> loop_points(Object* loop)
 {
-  Point** points = malloc(sizeof(Point*) * loop->nused);
-  for (unsigned i = 0; i < loop->nused; ++i)
-    points[i] = edge_point(loop->used[i].obj, loop->used[i].dir);
+  std::vector<Point*> points;
+  for (auto use : loop->used)
+    points.push_back(edge_point(use.obj, use.dir));
   return points;
 }
 
-struct extruded extrude_loop(Object* start, Vector v)
+Extruded extrude_loop(Object* start, Vector v)
 {
   Object* shell = new_shell();
   return extrude_loop2(start, v, shell, FORWARD);
 }
 
-struct extruded extrude_loop2(Object* start, Vector v,
+Extruded extrude_loop2(Object* start, Vector v,
     Object* shell, UseDir shell_dir)
 {
   Object* end = new_loop();
-  Point** start_points = loop_points(start);
-  struct extruded* point_extrusions = malloc(
-      sizeof(struct extruded) * start->nused);
-  for (unsigned i = 0; i < start->nused; ++i)
-    point_extrusions[i] = extrude_point(start_points[i], v);
-  free(start_points);
-  struct extruded* edge_extrusions = malloc(
-      sizeof(struct extruded) * start->nused);
-  for (unsigned i = 0; i < start->nused; ++i)
-    edge_extrusions[i] = extrude_edge2(start->used[i].obj, v,
-        point_extrusions[(i + (start->used[i].dir ^ 0)) % start->nused],
-        point_extrusions[(i + (start->used[i].dir ^ 1)) % start->nused]);
-  free(point_extrusions);
-  for (unsigned i = 0; i < start->nused; ++i)
+  std::vector<Point*> start_points = loop_points(start);
+  auto n = start_points.size();
+  std::vector<Extruded> point_extrusions;
+  for (auto start_point : start_points)
+    point_extrusions.push_back(extrude_point(start_point, v));
+  std::vector<Extruded> edge_extrusions;
+  for (std::size_t i = 0; i < n; ++i) {
+    edge_extrusions.push_back(
+        extrude_edge2(use.obj, v,
+          point_extrusions[(i + (use.dir ^ 0)) % n],
+          point_extrusions[(i + (use.dir ^ 1)) % n]));
+  }
+  for (std::size_t i = 0; i < n; ++i)
     add_use(end, start->used[i].dir, edge_extrusions[i].end);
-  for (unsigned i = 0; i < start->nused; ++i)
+  for (std::size_t i = 0; i < n; ++i)
     add_use(shell, start->used[i].dir ^ shell_dir, edge_extrusions[i].middle);
-  free(edge_extrusions);
-  return (struct extruded){shell, end};
+  return (Extruded){shell, end};
 }
 
 Object* new_circle(Vector center,
@@ -601,7 +598,7 @@ void add_hole_to_face(Object* face, Object* loop)
   add_use(face, REVERSE, loop);
 }
 
-struct extruded extrude_face(Object* face, Vector v)
+Extruded extrude_face(Object* face, Vector v)
 {
   Object* end;
   switch (face->type) {
@@ -618,7 +615,7 @@ struct extruded extrude_face(Object* face, Vector v)
     add_use(end, face->used[i].dir, end_loop);
   }
   Object* middle = new_volume2(shell);
-  return (struct extruded){middle, end};
+  return (Extruded){middle, end};
 }
 
 Object* face_loop(Object* face)
