@@ -156,18 +156,17 @@ void print_object_dmg(FILE* f, ObjPtr obj)
     case VOLUME: {
       fprintf(f, "%u %zu\n", obj->id, obj->used.size());
       for (auto use : obj->used) {
-        print_object_dmg(f, use.obj);
+        auto bnd = use.obj;
+        fprintf(f, " %zu\n", bnd->used.size());
+        for (auto bu : bnd->used) {
+          fprintf(f, "  %u %u\n", bu.obj->id, !bu.dir);
+        }
       }
     } break;
     case LOOP:
-    case SHELL: {
-      fprintf(f, " %zu\n", obj->used.size());
-      for (auto u : obj->used) {
-        fprintf(f, "  %u %u\n", u.obj->id, !u.dir);
-      }
-    } break;
-    case GROUP: {
-    } break;
+    case SHELL:
+    case GROUP:
+      break;
   }
 }
 
