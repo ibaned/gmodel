@@ -1,6 +1,6 @@
 get_filename_component(GMOD_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 get_filename_component(GMOD_LIB_DIR "${GMOD_CMAKE_DIR}" PATH)
-include(${GMOD_LIB_DIR}/omega_h-targets.cmake)
+include(${GMOD_LIB_DIR}/gmodel-targets.cmake)
 get_filename_component(Gmodel_INCLUDE_DIR "${GMOD_LIB_DIR}/../include" ABSOLUTE)
 set(Gmodel_INCLUDE_DIRS ${Gmodel_INCLUDE_DIR} @DEP_INCLUDE_DIRS@)
 set(Gmodel_COMPILER "@CMAKE_CXX_COMPILER@")
