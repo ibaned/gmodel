@@ -124,7 +124,7 @@ void write_closure_to_geo(ObjPtr obj, char const* filename)
 void print_simple_object(FILE* f, ObjPtr obj)
 {
   fprintf(f, "%s(%u) = {", type_names[obj->type], obj->id);
-  bool first = false;
+  bool first = true;
   for (auto use : obj->used) {
     if (!first) fprintf(f, ",");
     if (is_boundary(obj->type) && use.dir == REVERSE)
