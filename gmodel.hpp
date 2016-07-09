@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdio>
 #include <vector>
+#include <memory>
 
 namespace gmod {
 
@@ -38,48 +39,44 @@ enum {
 
 struct Object;
 
+typedef std::shared_ptr<Object> ObjPtr;
+
 struct Use {
   int dir;
-  Object* obj;
+  ObjPtr obj;
 };
 
 struct Object {
   int type;
   unsigned id;
-  unsigned ref_count;
   std::vector<Use> used;
-  std::vector<Object*> helpers;
-  void (*dtor)(Object* o);
+  std::vector<ObjPtr> helpers;
   unsigned visited;
+  Object(int type);
+  virtual ~Object();
 };
 
-typedef void (*dtor_t)(Object* obj);
+ObjPtr new_object(int type);
 
-void init_object(Object* obj, int type, dtor_t dtor);
-Object* new_object(int type, dtor_t dtor);
-void free_object(Object* obj);
-void grab_object(Object* obj);
-void drop_object(Object* obj);
+int get_used_dir(ObjPtr user, ObjPtr used);
 
-int get_used_dir(Object* user, Object* used);
+void print_object(FILE* f, ObjPtr obj);
+void print_object_physical(FILE* f, ObjPtr obj);
+void print_closure(FILE* f, ObjPtr obj);
+void print_simple_object(FILE* f, ObjPtr obj);
 
-void print_object(FILE* f, Object* obj);
-void print_object_physical(FILE* f, Object* obj);
-void print_closure(FILE* f, Object* obj);
-void print_simple_object(FILE* f, Object* obj);
+void write_closure_to_geo(ObjPtr obj, char const* filename);
 
-void write_closure_to_geo(Object* obj, char const* filename);
+void print_object_dmg(FILE* f, ObjPtr obj);
+unsigned count_of_type(std::vector<ObjPtr> const& objs, int type);
+unsigned count_of_dim(std::vector<ObjPtr> const& objs, unsigned dim);
+void print_closure_dmg(FILE* f, ObjPtr obj);
 
-void print_object_dmg(FILE* f, Object* obj);
-unsigned count_of_type(std::vector<Object*> const& objs, int type);
-unsigned count_of_dim(std::vector<Object*> const& objs, unsigned dim);
-void print_closure_dmg(FILE* f, Object* obj);
+void write_closure_to_dmg(ObjPtr obj, char const* filename);
 
-void write_closure_to_dmg(Object* obj, char const* filename);
-
-void add_use(Object* by, int dir, Object* of);
-void add_helper(Object* to, Object* h);
-std::vector<Object*> get_closure(Object* obj, unsigned include_helpers);
+void add_use(ObjPtr by, int dir, ObjPtr of);
+void add_helper(ObjPtr to, ObjPtr h);
+std::vector<ObjPtr> get_closure(ObjPtr obj, unsigned include_helpers);
 
 struct Vector {double x, y, z;};
 struct Matrix {Vector x, y, z;}; /* columns, not rows ! */
@@ -191,91 +188,94 @@ static inline Vector rotate_vector(Vector axis, double angle,
   return matrix_vector_product(rotation_matrix(axis, angle), v);
 }
 
-struct Point {
-  Object obj;
+struct Point : public Object {
   Vector pos;
   double size;
+  Point();
+  ~Point();
 };
+
+typedef std::shared_ptr<Point> PointPtr;
 
 extern double default_size;
 
-Point* new_point();
-Point* new_point2(Vector v);
-Point* new_point3(Vector v, double size);
-std::vector<Point*> new_points(std::vector<Vector> vs);
+PointPtr new_point();
+PointPtr new_point2(Vector v);
+PointPtr new_point3(Vector v, double size);
+std::vector<PointPtr> new_points(std::vector<Vector> vs);
 
-void print_point(FILE* f, Point* p);
+void print_point(FILE* f, PointPtr p);
 
 struct Extruded {
-  Object* middle;
-  Object* end;
+  ObjPtr middle;
+  ObjPtr end;
 };
 
-Extruded extrude_point(Point* start, Vector v);
-Point* edge_point(Object* edge, unsigned i);
+Extruded extrude_point(PointPtr start, Vector v);
+PointPtr edge_point(ObjPtr edge, unsigned i);
 
-Object* new_line();
-Object* new_line2(Point* start, Point* end);
-Object* new_line3(Vector origin, Vector span);
+ObjPtr new_line();
+ObjPtr new_line2(PointPtr start, PointPtr end);
+ObjPtr new_line3(Vector origin, Vector span);
 
-Object* new_arc();
-Object* new_arc2(Point* start, Point* center,
-    Point* end);
-Point* arc_center(Object* arc);
-Vector arc_normal(Object* arc);
-void print_arc(FILE* f, Object* arc);
+ObjPtr new_arc();
+ObjPtr new_arc2(PointPtr start, PointPtr center,
+    PointPtr end);
+PointPtr arc_center(ObjPtr arc);
+Vector arc_normal(ObjPtr arc);
+void print_arc(FILE* f, ObjPtr arc);
 
-Object* new_ellipse();
-Object* new_ellipse2(Point* start, Point* center,
-    Point* major_pt, Point* end);
-Point* ellipse_center(Object* e);
-Point* ellipse_major_pt(Object* e);
-void print_ellipse(FILE* f, Object* e);
+ObjPtr new_ellipse();
+ObjPtr new_ellipse2(PointPtr start, PointPtr center,
+    PointPtr major_pt, PointPtr end);
+PointPtr ellipse_center(ObjPtr e);
+PointPtr ellipse_major_pt(ObjPtr e);
+void print_ellipse(FILE* f, ObjPtr e);
 
-Extruded extrude_edge(Object* start, Vector v);
-Extruded extrude_edge2(Object* start, Vector v,
+Extruded extrude_edge(ObjPtr start, Vector v);
+Extruded extrude_edge2(ObjPtr start, Vector v,
     Extruded left, Extruded right);
 
-Object* new_loop();
-std::vector<Point*> loop_points(Object* loop);
-Extruded extrude_loop(Object* start, Vector v);
-Extruded extrude_loop2(Object* start, Vector v,
-    Object* shell, int shell_dir);
+ObjPtr new_loop();
+std::vector<PointPtr> loop_points(ObjPtr loop);
+Extruded extrude_loop(ObjPtr start, Vector v);
+Extruded extrude_loop2(ObjPtr start, Vector v,
+    ObjPtr shell, int shell_dir);
 
-Object* new_circle(Vector center,
+ObjPtr new_circle(Vector center,
     Vector normal, Vector x);
-Object* new_polyline(std::vector<Point*> const& pts);
-Object* new_polyline2(std::vector<Vector> const& vs);
+ObjPtr new_polyline(std::vector<PointPtr> const& pts);
+ObjPtr new_polyline2(std::vector<Vector> const& vs);
 
-Object* new_plane();
-Object* new_plane2(Object* loop);
+ObjPtr new_plane();
+ObjPtr new_plane2(ObjPtr loop);
 
-Object* new_square(Vector origin,
+ObjPtr new_square(Vector origin,
     Vector x, Vector y);
-Object* new_disk(Vector center,
+ObjPtr new_disk(Vector center,
     Vector normal, Vector x);
-Object* new_polygon(Vector* vs, unsigned n);
+ObjPtr new_polygon(Vector* vs, unsigned n);
 
-Object* new_ruled();
-Object* new_ruled2(Object* loop);
+ObjPtr new_ruled();
+ObjPtr new_ruled2(ObjPtr loop);
 
-void add_hole_to_face(Object* face, Object* loop);
-Extruded extrude_face(Object* face, Vector v);
-Object* face_loop(Object* face);
+void add_hole_to_face(ObjPtr face, ObjPtr loop);
+Extruded extrude_face(ObjPtr face, Vector v);
+ObjPtr face_loop(ObjPtr face);
 
-Object* new_shell();
+ObjPtr new_shell();
 
-void make_hemisphere(Object* circle,
-    Point* center, Object* shell,
+void make_hemisphere(ObjPtr circle,
+    PointPtr center, ObjPtr shell,
     int dir);
-Object* new_sphere(Vector center,
+ObjPtr new_sphere(Vector center,
     Vector normal, Vector x);
 
-Object* new_volume();
-Object* new_volume2(Object* shell);
-Object* volume_shell(Object* v);
+ObjPtr new_volume();
+ObjPtr new_volume2(ObjPtr shell);
+ObjPtr volume_shell(ObjPtr v);
 
-Object* new_cube(Vector origin,
+ObjPtr new_cube(Vector origin,
     Vector x, Vector y, Vector z);
 
 enum cube_face {
@@ -287,23 +287,23 @@ enum cube_face {
   LEFT
 };
 
-Object* get_cube_face(Object* cube, enum cube_face which);
+ObjPtr get_cube_face(ObjPtr cube, enum cube_face which);
 
-Object* new_ball(Vector center,
+ObjPtr new_ball(Vector center,
     Vector normal, Vector x);
 
-void insert_into(Object* into, Object* f);
+void insert_into(ObjPtr into, ObjPtr f);
 
-Object* new_group();
-void add_to_group(Object* group, Object* o);
+ObjPtr new_group();
+void add_to_group(ObjPtr group, ObjPtr o);
 
 void weld_volume_face_into(
-    Object* big_volume,
-    Object* small_volume,
-    Object* big_volume_face,
-    Object* small_volume_face);
+    ObjPtr big_volume,
+    ObjPtr small_volume,
+    ObjPtr big_volume_face,
+    ObjPtr small_volume_face);
 
-Vector eval(Object* o, double const* param);
+Vector eval(ObjPtr o, double const* param);
 
 } // end namespace gmod
 
