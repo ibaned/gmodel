@@ -59,6 +59,8 @@ add_executable(cube cube.cpp)
 target_link_libraries(cube gmodel)
 add_executable(cylinder cylinder.cpp)
 target_link_libraries(cylinder gmodel)
+add_executable(cube_in_cube cube_in_cube.cpp)
+target_link_libraries(cube_in_cube gmodel)
 
 install(FILES
   "${PROJECT_SOURCE_DIR}/gmodel.hpp"
