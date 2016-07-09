@@ -3,7 +3,7 @@ project(Gmodel CXX)
 
 set(GMOD_MAJOR "1")
 set(GMOD_MINOR "0")
-set(GMOD_PATCH "0")
+set(GMOD_PATCH "1")
 
 option(GMOD_OPTIMIZE "Compile with optimization" ON)
 option(GMOD_SYMBOLS "Compile with debug symbols" ON)
