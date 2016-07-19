@@ -10,19 +10,20 @@ namespace gmod {
 
 constexpr double PI = 3.14159265359;
 
-enum { NTYPES = 10 };
+enum { NTYPES = 11 };
 
 enum {
   POINT    = 0,
   LINE     = 1,
   ARC      = 2,
   ELLIPSE  = 3,
-  PLANE    = 4,
-  RULED    = 5,
-  VOLUME   = 6,
-  LOOP     = 7,
-  SHELL    = 8,
-  GROUP    = 9
+  SPLINE   = 4,
+  PLANE    = 5,
+  RULED    = 6,
+  VOLUME   = 7,
+  LOOP     = 8,
+  SHELL    = 9,
+  GROUP    =10
 };
 
 extern char const* const type_names[NTYPES];
@@ -231,6 +232,11 @@ ObjPtr new_ellipse2(PointPtr start, PointPtr center,
 PointPtr ellipse_center(ObjPtr e);
 PointPtr ellipse_major_pt(ObjPtr e);
 void print_ellipse(FILE* f, ObjPtr e);
+
+ObjPtr new_spline();
+ObjPtr new_spline2(std::vector<PointPtr> const& pts);
+ObjPtr new_spline3(std::vector<Vector> const& pts);
+void print_spline(FILE* f, ObjPtr e);
 
 Extruded extrude_edge(ObjPtr start, Vector v);
 Extruded extrude_edge2(ObjPtr start, Vector v,

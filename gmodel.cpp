@@ -12,6 +12,7 @@ char const* const type_names[NTYPES] = {
   [LINE]    = "Line",
   [ARC]     = "Circle",
   [ELLIPSE] = "Ellipse",
+  [SPLINE]  = "Spline",
   [PLANE]   = "Plane Surface",
   [RULED]   = "Ruled Surface",
   [VOLUME]  = "Volume",
@@ -25,6 +26,7 @@ char const* const physical_type_names[NTYPES] = {
   [LINE]    = "Physical Line",
   [ARC]     = "Physical Line",
   [ELLIPSE] = "Physical Line",
+  [SPLINE]  = "Physical Line",
   [PLANE]   = "Physical Surface",
   [RULED]   = "Physical Surface",
   [VOLUME]  = "Physical Volume",
@@ -38,6 +40,7 @@ unsigned const type_dims[NTYPES] = {
   [LINE]    = 1,
   [ARC]     = 1,
   [ELLIPSE] = 1,
+  [SPLINE]  = 1,
   [PLANE]   = 2,
   [RULED]   = 2,
   [VOLUME]  = 3,
@@ -91,6 +94,7 @@ void print_object(FILE* f, ObjPtr obj)
     case POINT: print_point(f, std::dynamic_pointer_cast<Point>(obj)); break;
     case ARC: print_arc(f, obj); break;
     case ELLIPSE: print_ellipse(f, obj); break;
+    case SPLINE: print_spline(f, obj); break;
     case GROUP: break;
     default: print_simple_object(f, obj); break;
   }
@@ -395,6 +399,39 @@ void print_ellipse(FILE* f, ObjPtr e)
       edge_point(e, 1)->id);
 }
 
+ObjPtr new_spline()
+{
+  return new_object(SPLINE);
+}
+
+ObjPtr new_spline2(std::vector<PointPtr> const& pts)
+{
+  assert(pts.size() >= 2);
+  auto e = new_spline();
+  add_use(e, FORWARD, pts.front());
+  for (size_t i = 1; i < pts.size() - 1; ++i)
+    add_helper(e, pts[i]);
+  add_use(e, FORWARD, pts.back());
+  return e;
+}
+
+ObjPtr new_spline3(std::vector<Vector> const& pts)
+{
+  std::vector<PointPtr> pts2;
+  for (auto p : pts)
+    pts2.push_back(new_point2(p));
+  return new_spline2(pts2);
+}
+
+void print_spline(FILE* f, ObjPtr e)
+{
+  fprintf(f, "%s(%u) = {%u,", type_names[e->type], e->id,
+      edge_point(e, 0)->id);
+  for (auto h : e->helpers)
+    fprintf(f, "%u,", h->id);
+  fprintf(f, "%u}\n", edge_point(e, 1)->id);
+}
+
 Extruded extrude_edge(ObjPtr start, Vector v)
 {
   Extruded left = extrude_point(edge_point(start, 0), v);
@@ -440,6 +477,18 @@ Extruded extrude_edge2(ObjPtr start, Vector v,
           std::dynamic_pointer_cast<Point>(right.end));
       break;
     }
+    case SPLINE: {
+      std::vector<PointPtr> end_pts;
+      end_pts.push_back(std::dynamic_pointer_cast<Point>(left.end));
+      for (auto h : start->helpers) {
+        auto start_h = std::dynamic_pointer_cast<Point>(h);
+        auto end_h = new_point3(add_vectors(start_h->pos, v), start_h->size);
+        end_pts.push_back(end_h);
+      }
+      end_pts.push_back(std::dynamic_pointer_cast<Point>(right.end));
+      end = new_spline2(end_pts);
+      break;
+    }
     default: end = 0; break;
   }
   add_use(loop, REVERSE, end);
@@ -448,7 +497,8 @@ Extruded extrude_edge2(ObjPtr start, Vector v,
   switch (start->type) {
     case LINE: middle = new_plane2(loop); break;
     case ARC:
-    case ELLIPSE: middle = new_ruled2(loop); break;
+    case ELLIPSE:
+    case SPLINE: middle = new_ruled2(loop); break;
     default: middle = 0; break;
   }
   return Extruded{middle, end};
