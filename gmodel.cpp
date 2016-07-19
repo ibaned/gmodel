@@ -429,7 +429,7 @@ void print_spline(FILE* f, ObjPtr e)
       edge_point(e, 0)->id);
   for (auto h : e->helpers)
     fprintf(f, "%u,", h->id);
-  fprintf(f, "%u}\n", edge_point(e, 1)->id);
+  fprintf(f, "%u};\n", edge_point(e, 1)->id);
 }
 
 Extruded extrude_edge(ObjPtr start, Vector v)
