@@ -132,7 +132,7 @@ void print_simple_object(FILE* f, ObjPtr obj)
   for (auto use : obj->used) {
     if (!first) fprintf(f, ",");
     if (is_boundary(obj->type) && use.dir == REVERSE)
-      fprintf(f, "%d", -((int)(use.obj->id)));
+      fprintf(f, "%d", -(int(use.obj->id)));
     else
       fprintf(f, "%u", use.obj->id);
     if (first) first = false;
