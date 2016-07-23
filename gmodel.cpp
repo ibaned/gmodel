@@ -8,45 +8,45 @@
 namespace gmod {
 
 char const* const type_names[NTYPES] = {
-  [POINT]   = "Point",
-  [LINE]    = "Line",
-  [ARC]     = "Circle",
-  [ELLIPSE] = "Ellipse",
-  [SPLINE]  = "Spline",
-  [PLANE]   = "Plane Surface",
-  [RULED]   = "Ruled Surface",
-  [VOLUME]  = "Volume",
-  [LOOP]    = "Line Loop",
-  [SHELL]   = "Surface Loop",
-  [GROUP]   = 0
+/* POINT   = */ "Point",
+/* LINE    = */ "Line",
+/* ARC     = */ "Circle",
+/* ELLIPSE = */ "Ellipse",
+/* SPLINE  = */ "Spline",
+/* PLANE   = */ "Plane Surface",
+/* RULED   = */ "Ruled Surface",
+/* VOLUME  = */ "Volume",
+/* LOOP    = */ "Line Loop",
+/* SHELL   = */ "Surface Loop",
+/* GROUP   = */ 0
 };
 
 char const* const physical_type_names[NTYPES] = {
-  [POINT]   = "Physical Point",
-  [LINE]    = "Physical Line",
-  [ARC]     = "Physical Line",
-  [ELLIPSE] = "Physical Line",
-  [SPLINE]  = "Physical Line",
-  [PLANE]   = "Physical Surface",
-  [RULED]   = "Physical Surface",
-  [VOLUME]  = "Physical Volume",
-  [LOOP]    = 0,
-  [SHELL]   = 0,
-  [GROUP]   = 0
+/* POINT   = */ "Physical Point",
+/* LINE    = */ "Physical Line",
+/* ARC     = */ "Physical Line",
+/* ELLIPSE = */ "Physical Line",
+/* SPLINE  = */ "Physical Line",
+/* PLANE   = */ "Physical Surface",
+/* RULED   = */ "Physical Surface",
+/* VOLUME  = */ "Physical Volume",
+/* LOOP    = */ 0,
+/* SHELL   = */ 0,
+/* GROUP   = */ 0
 };
 
 unsigned const type_dims[NTYPES] = {
-  [POINT]   = 0,
-  [LINE]    = 1,
-  [ARC]     = 1,
-  [ELLIPSE] = 1,
-  [SPLINE]  = 1,
-  [PLANE]   = 2,
-  [RULED]   = 2,
-  [VOLUME]  = 3,
-  [LOOP]    = 0,
-  [SHELL]   = 0,
-  [GROUP]   = 0
+/* POINT   = */ 0,
+/* LINE    = */ 1,
+/* ARC     = */ 1,
+/* ELLIPSE = */ 1,
+/* SPLINE  = */ 1,
+/* PLANE   = */ 2,
+/* RULED   = */ 2,
+/* VOLUME  = */ 3,
+/* LOOP    = */ 0,
+/* SHELL   = */ 0,
+/* GROUP   = */ 0
 };
 
 unsigned is_entity(int t)
