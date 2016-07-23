@@ -62,8 +62,8 @@ unsigned is_boundary(int t)
 static unsigned next_id = 0;
 static unsigned nlive_objects = 0;
 
-Object::Object(int type):
-  type(type),
+Object::Object(int type_):
+  type(type_),
   id(next_id++),
   visited(0)
 {
