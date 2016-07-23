@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.0)
 project(Gmodel CXX)
 
 set(GMOD_MAJOR "1")
-set(GMOD_MINOR "1")
+set(GMOD_MINOR "2")
 set(GMOD_PATCH "1")
 
 option(GMOD_OPTIMIZE "Compile with optimization" ON)
@@ -54,6 +54,9 @@ endif("${isSystemDir}" STREQUAL "-1")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH True)
 
 add_library(gmodel gmodel.cpp)
+target_include_directories(gmodel INTERFACE
+  $<INSTALL_INTERFACE:include>
+  )
 
 add_executable(cube cube.cpp)
 target_link_libraries(cube gmodel)
