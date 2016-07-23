@@ -823,7 +823,7 @@ Vector eval(ObjPtr o, double const* param)
       return add_vectors(c->pos, add_vectors(scale_vector(cos(ang), ca),
                                              scale_vector(sin(ang), cb)));
     }
-    default: return (Vector){-42,-42,-42};
+    default: return Vector{-42,-42,-42};
   }
 }
 

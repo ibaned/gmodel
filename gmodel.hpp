@@ -85,19 +85,19 @@ struct Matrix {Vector x, y, z;}; /* columns, not rows ! */
 static inline Vector add_vectors(
     Vector a, Vector b)
 {
-  return (Vector){a.x + b.x, a.y + b.y, a.z + b.z};
+  return Vector{a.x + b.x, a.y + b.y, a.z + b.z};
 }
 
 static inline Vector subtract_vectors(
     Vector a, Vector b)
 {
-  return (Vector){a.x - b.x, a.y - b.y, a.z - b.z};
+  return Vector{a.x - b.x, a.y - b.y, a.z - b.z};
 }
 
 static inline Vector scale_vector(
     double a, Vector b)
 {
-  return (Vector){a * b.x, a * b.y, a * b.z};
+  return Vector{a * b.x, a * b.y, a * b.z};
 }
 
 static inline double dot_product(
@@ -127,10 +127,10 @@ static inline Vector matrix_vector_product(
 static inline Matrix cross_product_matrix(
     Vector a)
 {
-  return (Matrix){
-    (Vector){    0,  a.z, -a.y},
-    (Vector){ -a.z,    0,  a.x},
-    (Vector){  a.y, -a.x,    0}};
+  return Matrix{
+    Vector{    0,  a.z, -a.y},
+    Vector{ -a.z,    0,  a.x},
+    Vector{  a.y, -a.x,    0}};
 }
 
 static inline Vector cross_product(
@@ -143,7 +143,7 @@ static inline Vector cross_product(
 static inline Matrix tensor_product_matrix(
     Vector a, Vector b)
 {
-  return (Matrix){
+  return Matrix{
     scale_vector(b.x, a),
     scale_vector(b.y, a),
     scale_vector(b.z, a)};
@@ -151,16 +151,16 @@ static inline Matrix tensor_product_matrix(
 
 static inline Matrix identity_matrix()
 {
-  return (Matrix){
-    (Vector){1,0,0},
-    (Vector){0,1,0},
-    (Vector){0,0,1}};
+  return Matrix{
+    Vector{1,0,0},
+    Vector{0,1,0},
+    Vector{0,0,1}};
 }
 
 static inline Matrix scale_matrix(double a,
     Matrix b)
 {
-  return (Matrix){
+  return Matrix{
     scale_vector(a, b.x),
     scale_vector(a, b.y),
     scale_vector(a, b.z)};
@@ -169,7 +169,7 @@ static inline Matrix scale_matrix(double a,
 static inline Matrix add_matrices(
     Matrix a, Matrix b)
 {
-  return (Matrix){
+  return Matrix{
     add_vectors(a.x, b.x),
     add_vectors(a.y, b.y),
     add_vectors(a.z, b.z)};
