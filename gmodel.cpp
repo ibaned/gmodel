@@ -35,7 +35,7 @@ char const* const physical_type_names[NTYPES] = {
 /* GROUP   = */ 0
 };
 
-unsigned const type_dims[NTYPES] = {
+int const type_dims[NTYPES] = {
 /* POINT   = */ 0,
 /* LINE    = */ 1,
 /* ARC     = */ 1,
@@ -49,18 +49,36 @@ unsigned const type_dims[NTYPES] = {
 /* GROUP   = */ 0
 };
 
-unsigned is_entity(int t)
+template <typename T>
+static T& at(std::vector<T>& v, int i)
+{
+  return v.at(std::size_t(i));
+}
+
+template <typename T>
+static T const& at(std::vector<T> const& v, int i)
+{
+  return v.at(std::size_t(i));
+}
+
+template <typename T>
+static int size(std::vector<T> const& v)
+{
+  return int(v.size());
+}
+
+int is_entity(int t)
 {
   return t <= VOLUME;
 }
 
-unsigned is_boundary(int t)
+int is_boundary(int t)
 {
   return t == LOOP || t == SHELL;
 }
 
-static unsigned next_id = 0;
-static unsigned nlive_objects = 0;
+static int next_id = 0;
+static int nlive_objects = 0;
 
 Object::Object(int type_):
   type(type_),
@@ -174,18 +192,18 @@ void print_object_dmg(FILE* f, ObjPtr obj)
   }
 }
 
-unsigned count_of_type(std::vector<ObjPtr> const& objs, int type)
+int count_of_type(std::vector<ObjPtr> const& objs, int type)
 {
-  unsigned c = 0;
+  int c = 0;
   for (auto obj : objs)
     if (obj->type == type)
       ++c;
   return c;
 }
 
-unsigned count_of_dim(std::vector<ObjPtr> const& objs, unsigned dim)
+int count_of_dim(std::vector<ObjPtr> const& objs, int dim)
 {
-  unsigned c = 0;
+  int c = 0;
   for (int i = 0; i < NTYPES; ++i)
     if (is_entity(i) && type_dims[i] == dim)
       c += count_of_type(objs, i);
@@ -222,10 +240,10 @@ void add_helper(ObjPtr to, ObjPtr h)
   to->helpers.push_back(h);
 }
 
-std::vector<ObjPtr> get_closure(ObjPtr obj, unsigned include_helpers)
+std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers)
 {
   std::vector<ObjPtr> queue;
-  queue.reserve(nlive_objects);
+  queue.reserve(std::size_t(nlive_objects));
   std::size_t first = 0;
   queue.push_back(obj);
   while (first != queue.size()) {
@@ -298,12 +316,13 @@ Extruded extrude_point(PointPtr start, Vector v)
 {
   PointPtr end = new_point3(add_vectors(start->pos, v), start->size);
   ObjPtr middle = new_line2(start, end);
-  return (Extruded){middle, end};
+  return Extruded{middle, end};
 }
 
-PointPtr edge_point(ObjPtr edge, unsigned i)
+PointPtr edge_point(ObjPtr edge, int i)
 {
-  return std::dynamic_pointer_cast<Point>(edge->used[i].obj);
+  auto o = edge->used[std::size_t(i)].obj;
+  return std::dynamic_pointer_cast<Point>(o);
 }
 
 ObjPtr new_line()
@@ -528,22 +547,22 @@ Extruded extrude_loop2(ObjPtr start, Vector v,
 {
   ObjPtr end = new_loop();
   std::vector<PointPtr> start_points = loop_points(start);
-  auto n = start_points.size();
+  int n = size(start_points);
   std::vector<Extruded> point_extrusions;
   for (auto start_point : start_points)
     point_extrusions.push_back(extrude_point(start_point, v));
   std::vector<Extruded> edge_extrusions;
-  for (std::size_t i = 0; i < n; ++i) {
-    auto use = start->used[i];
+  for (int i = 0; i < n; ++i) {
+    auto use = at(start->used, i);
     edge_extrusions.push_back(
         extrude_edge2(use.obj, v,
-          point_extrusions[(i + (use.dir ^ 0)) % n],
-          point_extrusions[(i + (use.dir ^ 1)) % n]));
+          at(point_extrusions, (i + (use.dir ^ 0)) % n),
+          at(point_extrusions, (i + (use.dir ^ 1)) % n)));
   }
-  for (std::size_t i = 0; i < n; ++i)
-    add_use(end, start->used[i].dir, edge_extrusions[i].end);
-  for (std::size_t i = 0; i < n; ++i)
-    add_use(shell, start->used[i].dir ^ shell_dir, edge_extrusions[i].middle);
+  for (int i = 0; i < n; ++i)
+    add_use(end, at(start->used, i).dir, at(edge_extrusions, i).end);
+  for (int i = 0; i < n; ++i)
+    add_use(shell, at(start->used, i).dir ^ shell_dir, at(edge_extrusions, i).middle);
   return Extruded{shell, end};
 }
 
@@ -553,12 +572,12 @@ ObjPtr new_circle(Vector center,
   Matrix r = rotation_matrix(normal, PI / 2);
   PointPtr center_point = new_point2(center);
   PointPtr ring_points[4];
-  for (unsigned i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i) {
     ring_points[i] = new_point2(add_vectors(center, x));
     x = matrix_vector_product(r, x);
   }
   ObjPtr loop = new_loop();
-  for (unsigned i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i) {
     ObjPtr a = new_arc2(ring_points[i],
         center_point, ring_points[(i + 1) % 4]);
     add_use(loop, FORWARD, a);
@@ -605,7 +624,7 @@ ObjPtr new_disk(Vector center,
   return new_plane2(new_circle(center, normal, x));
 }
 
-ObjPtr new_polygon(std::vector<Vector> vs)
+ObjPtr new_polygon(std::vector<Vector> const& vs)
 {
   return new_plane2(new_polyline2(vs));
 }

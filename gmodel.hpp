@@ -28,10 +28,10 @@ enum {
 
 extern char const* const type_names[NTYPES];
 extern char const* const physical_type_names[NTYPES];
-extern unsigned const type_dims[NTYPES];
+extern int const type_dims[NTYPES];
 
-unsigned is_entity(int t);
-unsigned is_boundary(int t);
+int is_entity(int t);
+int is_boundary(int t);
 
 enum {
   FORWARD = 0,
@@ -49,10 +49,10 @@ struct Use {
 
 struct Object {
   int type;
-  unsigned id;
+  int id;
   std::vector<Use> used;
   std::vector<ObjPtr> helpers;
-  unsigned visited;
+  int visited;
   Object(int type);
   virtual ~Object();
 };
@@ -69,15 +69,15 @@ void print_simple_object(FILE* f, ObjPtr obj);
 void write_closure_to_geo(ObjPtr obj, char const* filename);
 
 void print_object_dmg(FILE* f, ObjPtr obj);
-unsigned count_of_type(std::vector<ObjPtr> const& objs, int type);
-unsigned count_of_dim(std::vector<ObjPtr> const& objs, unsigned dim);
+int count_of_type(std::vector<ObjPtr> const& objs, int type);
+int count_of_dim(std::vector<ObjPtr> const& objs, int dim);
 void print_closure_dmg(FILE* f, ObjPtr obj);
 
 void write_closure_to_dmg(ObjPtr obj, char const* filename);
 
 void add_use(ObjPtr by, int dir, ObjPtr of);
 void add_helper(ObjPtr to, ObjPtr h);
-std::vector<ObjPtr> get_closure(ObjPtr obj, unsigned include_helpers);
+std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers);
 
 struct Vector {double x, y, z;};
 struct Matrix {Vector x, y, z;}; /* columns, not rows ! */
@@ -213,7 +213,7 @@ struct Extruded {
 };
 
 Extruded extrude_point(PointPtr start, Vector v);
-PointPtr edge_point(ObjPtr edge, unsigned i);
+PointPtr edge_point(ObjPtr edge, int i);
 
 ObjPtr new_line();
 ObjPtr new_line2(PointPtr start, PointPtr end);
@@ -260,7 +260,7 @@ ObjPtr new_square(Vector origin,
     Vector x, Vector y);
 ObjPtr new_disk(Vector center,
     Vector normal, Vector x);
-ObjPtr new_polygon(Vector* vs, unsigned n);
+ObjPtr new_polygon(std::vector<Vector> const& vs);
 
 ObjPtr new_ruled();
 ObjPtr new_ruled2(ObjPtr loop);
