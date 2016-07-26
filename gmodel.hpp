@@ -311,6 +311,16 @@ void weld_volume_face_into(
 
 Vector eval(ObjPtr o, double const* param);
 
+void transform_object(ObjPtr object, Matrix linear, Vector translation);
+
 } // end namespace gmod
+
+static inline gmod::Vector operator+(gmod::Vector a, gmod::Vector b) {
+  return gmod::add_vectors(a, b);
+}
+
+static inline gmod::Vector operator*(gmod::Matrix a, gmod::Vector b) {
+  return gmod::matrix_vector_product(a, b);
+}
 
 #endif

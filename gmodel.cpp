@@ -846,4 +846,14 @@ Vector eval(ObjPtr o, double const* param)
   }
 }
 
+void transform_object(ObjPtr object, Matrix linear, Vector translation) {
+  auto closure = get_closure(object, 1);
+  for (auto co : closure) {
+    if (co->type == POINT) {
+      auto pt = std::dynamic_pointer_cast<Point>(co);
+      pt->pos = (linear * (pt->pos)) + translation;
+    }
+  }
+}
+
 } // end namespace gmod
