@@ -1,4 +1,5 @@
-#include "gmodel.hpp"
+#include <gmodel.hpp>
+#include <minidiff.hpp>
 
 int main()
 {
@@ -13,5 +14,5 @@ int main()
       gmod::Vector{0,1./3.,0},
       gmod::Vector{0,0,1./3.});
   gmod::insert_into(outer, inner);
-  gmod::write_closure_to_geo(outer, "cube_in_cube.geo");
+  prevent_regression(outer, "cube_in_cube");
 }

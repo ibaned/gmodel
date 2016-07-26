@@ -1,4 +1,5 @@
-#include "gmodel.hpp"
+#include <gmodel.hpp>
+#include <minidiff.hpp>
 
 int main()
 {
@@ -19,6 +20,6 @@ int main()
   gmod::add_use(l, gmod::FORWARD, ea);
   auto f = gmod::new_plane2(l);
   auto r = gmod::extrude_face(f, gmod::Vector{0,0,1}).middle;
-  gmod::write_closure_to_geo(r, "spline_shape.geo");
+  prevent_regression(r, "spline_shape");
 }
 

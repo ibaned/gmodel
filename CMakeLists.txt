@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
 project(Gmodel CXX)
 
+#trying to force BUILD_TESTING to default to OFF
+set(BUILD_TESTING OFF CACHE STRING "Build and run tests")
+
+include(CTest)
+enable_testing()
+
 set(GMOD_MAJOR "1")
 set(GMOD_MINOR "2")
 set(GMOD_PATCH "0")
@@ -55,17 +61,11 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH True)
 
 add_library(gmodel gmodel.cpp)
 target_include_directories(gmodel INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include>
   )
 
-add_executable(cube cube.cpp)
-target_link_libraries(cube gmodel)
-add_executable(cylinder cylinder.cpp)
-target_link_libraries(cylinder gmodel)
-add_executable(cube_in_cube cube_in_cube.cpp)
-target_link_libraries(cube_in_cube gmodel)
-add_executable(spline_shape spline_shape.cpp)
-target_link_libraries(spline_shape gmodel)
+add_subdirectory(tests)
 
 install(FILES
   "${PROJECT_SOURCE_DIR}/gmodel.hpp"
