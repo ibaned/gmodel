@@ -485,6 +485,23 @@ ObjPtr new_circle(Vector center, Vector normal, Vector x) {
   return loop;
 }
 
+ObjPtr new_ellipse3(Vector center, Vector major, Vector minor) {
+  auto center_point = new_point2(center);
+  PointPtr ring_points[4];
+  ring_points[0] = new_point2(center + major);
+  ring_points[1] = new_point2(center + minor);
+  ring_points[2] = new_point2(center - major);
+  ring_points[3] = new_point2(center - minor);
+  auto major_point = new_point2(center + (major / 2));
+  auto loop = new_loop();
+  for (int i = 0; i < 4; ++i) {
+    auto a = new_ellipse2(ring_points[i], center_point, major_point,
+                          ring_points[(i + 1) % 4]);
+    add_use(loop, FORWARD, a);
+  }
+  return loop;
+}
+
 ObjPtr new_polyline(std::vector<PointPtr> const& pts) {
   auto loop = new_loop();
   for (std::size_t i = 0; i < pts.size(); ++i) {
@@ -512,6 +529,10 @@ ObjPtr new_square(Vector origin, Vector x, Vector y) {
 
 ObjPtr new_disk(Vector center, Vector normal, Vector x) {
   return new_plane2(new_circle(center, normal, x));
+}
+
+ObjPtr new_elliptical_disk(Vector center, Vector major, Vector minor) {
+  return new_plane2(new_ellipse3(center, major, minor));
 }
 
 ObjPtr new_polygon(std::vector<Vector> const& vs) {

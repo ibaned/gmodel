@@ -211,6 +211,7 @@ Extruded extrude_loop(ObjPtr start, Vector v);
 Extruded extrude_loop2(ObjPtr start, Vector v, ObjPtr shell, int shell_dir);
 
 ObjPtr new_circle(Vector center, Vector normal, Vector x);
+ObjPtr new_ellipse3(Vector center, Vector major, Vector minor);
 ObjPtr new_polyline(std::vector<PointPtr> const& pts);
 ObjPtr new_polyline2(std::vector<Vector> const& vs);
 
@@ -219,6 +220,7 @@ ObjPtr new_plane2(ObjPtr loop);
 
 ObjPtr new_square(Vector origin, Vector x, Vector y);
 ObjPtr new_disk(Vector center, Vector normal, Vector x);
+ObjPtr new_elliptical_disk(Vector center, Vector major, Vector minor);
 ObjPtr new_polygon(std::vector<Vector> const& vs);
 
 ObjPtr new_ruled();
@@ -263,6 +265,18 @@ ObjPtr copy_closure(ObjPtr object);
 
 static inline gmod::Vector operator+(gmod::Vector a, gmod::Vector b) {
   return gmod::add_vectors(a, b);
+}
+
+static inline gmod::Vector operator-(gmod::Vector a, gmod::Vector b) {
+  return gmod::subtract_vectors(a, b);
+}
+
+static inline gmod::Vector operator*(double a, gmod::Vector b) {
+  return gmod::scale_vector(a, b);
+}
+
+static inline gmod::Vector operator/(gmod::Vector a, double b) {
+  return gmod::scale_vector(1.0 / b, a);
 }
 
 static inline gmod::Vector operator*(gmod::Matrix a, gmod::Vector b) {
