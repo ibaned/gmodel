@@ -25,8 +25,7 @@ find_package(Gmodel 1.2.0)
 target_link_libraries(myprogram gmodel)
 ```
 
-Several example executables are included and compiled along
-with the library.
+Several example executables can be found in the `tests/` directory.
 
 ## Features
 
@@ -37,10 +36,13 @@ Gmodel provides at least the following:
 * Built-in functions to make spheres, etc.
 * Output model in Gmsh `.geo` format
 * Output model in [PUMI][1] `.dmg` format
+* Spline formation and extrusion
+* "Welding" for simple cases
+* Model affine transformation
 
 Gmodel does not support the more powerful CAD operations
-involving objects whose boundaries overlap; we do not
-currently have the resources to develop such features.
+such as boolean operations involving objects whose boundaries overlap;
+we do not currently have the resources to develop such features.
 
 ## Contributing
 
