@@ -1,150 +1,130 @@
 #include "gmodel.hpp"
 
-#include <cassert>
-#include <cstdlib>
-#include <cstdio>
 #include <algorithm>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 
 namespace gmod {
 
 char const* const type_names[NTYPES] = {
-/* POINT   = */ "Point",
-/* LINE    = */ "Line",
-/* ARC     = */ "Circle",
-/* ELLIPSE = */ "Ellipse",
-/* SPLINE  = */ "Spline",
-/* PLANE   = */ "Plane Surface",
-/* RULED   = */ "Ruled Surface",
-/* VOLUME  = */ "Volume",
-/* LOOP    = */ "Line Loop",
-/* SHELL   = */ "Surface Loop",
-/* GROUP   = */ 0
-};
+    /* POINT   = */ "Point",
+    /* LINE    = */ "Line",
+    /* ARC     = */ "Circle",
+    /* ELLIPSE = */ "Ellipse",
+    /* SPLINE  = */ "Spline",
+    /* PLANE   = */ "Plane Surface",
+    /* RULED   = */ "Ruled Surface",
+    /* VOLUME  = */ "Volume",
+    /* LOOP    = */ "Line Loop",
+    /* SHELL   = */ "Surface Loop",
+    /* GROUP   = */ 0};
 
 char const* const physical_type_names[NTYPES] = {
-/* POINT   = */ "Physical Point",
-/* LINE    = */ "Physical Line",
-/* ARC     = */ "Physical Line",
-/* ELLIPSE = */ "Physical Line",
-/* SPLINE  = */ "Physical Line",
-/* PLANE   = */ "Physical Surface",
-/* RULED   = */ "Physical Surface",
-/* VOLUME  = */ "Physical Volume",
-/* LOOP    = */ 0,
-/* SHELL   = */ 0,
-/* GROUP   = */ 0
-};
+    /* POINT   = */ "Physical Point",
+    /* LINE    = */ "Physical Line",
+    /* ARC     = */ "Physical Line",
+    /* ELLIPSE = */ "Physical Line",
+    /* SPLINE  = */ "Physical Line",
+    /* PLANE   = */ "Physical Surface",
+    /* RULED   = */ "Physical Surface",
+    /* VOLUME  = */ "Physical Volume",
+    /* LOOP    = */ 0,
+    /* SHELL   = */ 0,
+    /* GROUP   = */ 0};
 
 int const type_dims[NTYPES] = {
-/* POINT   = */ 0,
-/* LINE    = */ 1,
-/* ARC     = */ 1,
-/* ELLIPSE = */ 1,
-/* SPLINE  = */ 1,
-/* PLANE   = */ 2,
-/* RULED   = */ 2,
-/* VOLUME  = */ 3,
-/* LOOP    = */ 0,
-/* SHELL   = */ 0,
-/* GROUP   = */ 0
-};
+    /* POINT   = */ 0,
+    /* LINE    = */ 1,
+    /* ARC     = */ 1,
+    /* ELLIPSE = */ 1,
+    /* SPLINE  = */ 1,
+    /* PLANE   = */ 2,
+    /* RULED   = */ 2,
+    /* VOLUME  = */ 3,
+    /* LOOP    = */ 0,
+    /* SHELL   = */ 0,
+    /* GROUP   = */ 0};
 
 template <typename T>
-static T& at(std::vector<T>& v, int i)
-{
+static T& at(std::vector<T>& v, int i) {
   return v.at(std::size_t(i));
 }
 
 template <typename T>
-static T const& at(std::vector<T> const& v, int i)
-{
+static T const& at(std::vector<T> const& v, int i) {
   return v.at(std::size_t(i));
 }
 
 template <typename T>
-static int size(std::vector<T> const& v)
-{
+static int size(std::vector<T> const& v) {
   return int(v.size());
 }
 
-int is_entity(int t)
-{
-  return t <= VOLUME;
-}
+int is_entity(int t) { return t <= VOLUME; }
 
-int is_boundary(int t)
-{
-  return t == LOOP || t == SHELL;
-}
+int is_boundary(int t) { return t == LOOP || t == SHELL; }
 
 static int next_id = 0;
 static int nlive_objects = 0;
 
-Object::Object(int type_):
-  type(type_),
-  id(next_id++),
-  scratch(-1)
-{
+Object::Object(int type_) : type(type_), id(next_id++), scratch(-1) {
   ++nlive_objects;
 }
 
-ObjPtr new_object(int type)
-{
-  return ObjPtr(new Object(type));
-}
+ObjPtr new_object(int type) { return ObjPtr(new Object(type)); }
 
-Object::~Object()
-{
-  --nlive_objects;
-}
+Object::~Object() { --nlive_objects; }
 
-int get_used_dir(ObjPtr user, ObjPtr used)
-{
+int get_used_dir(ObjPtr user, ObjPtr used) {
   auto it = std::find_if(user->used.begin(), user->used.end(),
-      [=](Use u){return u.obj == used;});
+                         [=](Use u) { return u.obj == used; });
   assert(it != user->used.end());
   return it->dir;
 }
 
-void print_object(FILE* f, ObjPtr obj)
-{
+void print_object(FILE* f, ObjPtr obj) {
   switch (obj->type) {
-    case POINT: print_point(f, std::dynamic_pointer_cast<Point>(obj)); break;
-    case ARC: print_arc(f, obj); break;
-    case ELLIPSE: print_ellipse(f, obj); break;
-    case SPLINE: print_spline(f, obj); break;
-    case GROUP: break;
-    default: print_simple_object(f, obj); break;
+    case POINT:
+      print_point(f, std::dynamic_pointer_cast<Point>(obj));
+      break;
+    case ARC:
+      print_arc(f, obj);
+      break;
+    case ELLIPSE:
+      print_ellipse(f, obj);
+      break;
+    case SPLINE:
+      print_spline(f, obj);
+      break;
+    case GROUP:
+      break;
+    default:
+      print_simple_object(f, obj);
+      break;
   }
 }
 
-void print_object_physical(FILE* f, ObjPtr obj)
-{
-  if (!is_entity(obj->type))
-    return;
-  fprintf(f, "%s(%u) = {%u};\n", physical_type_names[obj->type],
-      obj->id, obj->id);
+void print_object_physical(FILE* f, ObjPtr obj) {
+  if (!is_entity(obj->type)) return;
+  fprintf(f, "%s(%u) = {%u};\n", physical_type_names[obj->type], obj->id,
+          obj->id);
 }
 
-void print_closure(FILE* f, ObjPtr obj)
-{
+void print_closure(FILE* f, ObjPtr obj) {
   auto closure = get_closure(obj, 1);
-  for (auto co : closure)
-    print_object(f, co);
+  for (auto co : closure) print_object(f, co);
   closure = get_closure(obj, 0);
-  for (auto co : closure)
-    print_object_physical(f, co);
+  for (auto co : closure) print_object_physical(f, co);
 }
 
-void write_closure_to_geo(ObjPtr obj, char const* filename)
-{
+void write_closure_to_geo(ObjPtr obj, char const* filename) {
   FILE* f = fopen(filename, "w");
   print_closure(f, obj);
   fclose(f);
 }
 
-void print_simple_object(FILE* f, ObjPtr obj)
-{
+void print_simple_object(FILE* f, ObjPtr obj) {
   fprintf(f, "%s(%u) = {", type_names[obj->type], obj->id);
   bool first = true;
   for (auto use : obj->used) {
@@ -158,20 +138,17 @@ void print_simple_object(FILE* f, ObjPtr obj)
   fprintf(f, "};\n");
 }
 
-void print_object_dmg(FILE* f, ObjPtr obj)
-{
+void print_object_dmg(FILE* f, ObjPtr obj) {
   switch (obj->type) {
     case POINT: {
       PointPtr p = std::dynamic_pointer_cast<Point>(obj);
-      fprintf(f, "%u %f %f %f\n", obj->id,
-          p->pos.x, p->pos.y, p->pos.z);
+      fprintf(f, "%u %f %f %f\n", obj->id, p->pos.x, p->pos.y, p->pos.z);
     } break;
     case LINE:
     case ARC:
     case ELLIPSE: {
-      fprintf(f, "%u %u %u\n", obj->id,
-          edge_point(obj, 0)->id,
-          edge_point(obj, 1)->id);
+      fprintf(f, "%u %u %u\n", obj->id, edge_point(obj, 0)->id,
+              edge_point(obj, 1)->id);
     } break;
     case PLANE:
     case RULED:
@@ -192,56 +169,42 @@ void print_object_dmg(FILE* f, ObjPtr obj)
   }
 }
 
-int count_of_type(std::vector<ObjPtr> const& objs, int type)
-{
+int count_of_type(std::vector<ObjPtr> const& objs, int type) {
   int c = 0;
   for (auto obj : objs)
-    if (obj->type == type)
-      ++c;
+    if (obj->type == type) ++c;
   return c;
 }
 
-int count_of_dim(std::vector<ObjPtr> const& objs, int dim)
-{
+int count_of_dim(std::vector<ObjPtr> const& objs, int dim) {
   int c = 0;
   for (int i = 0; i < NTYPES; ++i)
-    if (is_entity(i) && type_dims[i] == dim)
-      c += count_of_type(objs, i);
+    if (is_entity(i) && type_dims[i] == dim) c += count_of_type(objs, i);
   return c;
 }
 
-void print_closure_dmg(FILE* f, ObjPtr obj)
-{
+void print_closure_dmg(FILE* f, ObjPtr obj) {
   auto closure = get_closure(obj, 0);
-  fprintf(f, "%u %u %u %u\n",
-      count_of_dim(closure, 3),
-      count_of_dim(closure, 2),
-      count_of_dim(closure, 1),
-      count_of_dim(closure, 0));
+  fprintf(f, "%u %u %u %u\n", count_of_dim(closure, 3),
+          count_of_dim(closure, 2), count_of_dim(closure, 1),
+          count_of_dim(closure, 0));
   fprintf(f, "0 0 0\n0 0 0\n");
-  for (auto co : closure)
-    print_object_dmg(f, co);
+  for (auto co : closure) print_object_dmg(f, co);
 }
 
-void write_closure_to_dmg(ObjPtr obj, char const* filename)
-{
+void write_closure_to_dmg(ObjPtr obj, char const* filename) {
   FILE* f = fopen(filename, "w");
   print_closure_dmg(f, obj);
   fclose(f);
 }
 
-void add_use(ObjPtr by, int dir, ObjPtr of)
-{
+void add_use(ObjPtr by, int dir, ObjPtr of) {
   by->used.push_back(Use{dir, of});
 }
 
-void add_helper(ObjPtr to, ObjPtr h)
-{
-  to->helpers.push_back(h);
-}
+void add_helper(ObjPtr to, ObjPtr h) { to->helpers.push_back(h); }
 
-std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers)
-{
+std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers) {
   std::vector<ObjPtr> queue;
   queue.reserve(std::size_t(nlive_objects));
   std::size_t first = 0;
@@ -263,95 +226,71 @@ std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers)
         }
       }
   }
-  for (std::size_t i = 0; i < queue.size(); ++i)
-    queue[i]->scratch = -1;
+  for (std::size_t i = 0; i < queue.size(); ++i) queue[i]->scratch = -1;
   std::reverse(queue.begin(), queue.end());
   return queue;
 }
 
-Point::Point() : Object(POINT)
-{
-}
+Point::Point() : Object(POINT) {}
 
-Point::~Point()
-{
-}
+Point::~Point() {}
 
-PointPtr new_point()
-{
-  return PointPtr(new Point());
-}
+PointPtr new_point() { return PointPtr(new Point()); }
 
 double default_size = 0.1;
 
-PointPtr new_point2(Vector v)
-{
+PointPtr new_point2(Vector v) {
   PointPtr p = new_point();
   p->pos = v;
   p->size = default_size;
   return p;
 }
 
-PointPtr new_point3(Vector v, double size)
-{
+PointPtr new_point3(Vector v, double size) {
   PointPtr p = new_point();
   p->pos = v;
   p->size = size;
   return p;
 }
 
-std::vector<PointPtr> new_points(std::vector<Vector> vs)
-{
+std::vector<PointPtr> new_points(std::vector<Vector> vs) {
   std::vector<PointPtr> out;
   for (auto vec : vs) out.push_back(new_point2(vec));
   return out;
 }
 
-void print_point(FILE* f, PointPtr p)
-{
-  fprintf(f, "Point(%u) = {%f,%f,%f,%f};\n",
-      p->id, p->pos.x, p->pos.y, p->pos.z, p->size);
+void print_point(FILE* f, PointPtr p) {
+  fprintf(f, "Point(%u) = {%f,%f,%f,%f};\n", p->id, p->pos.x, p->pos.y,
+          p->pos.z, p->size);
 }
 
-Extruded extrude_point(PointPtr start, Vector v)
-{
+Extruded extrude_point(PointPtr start, Vector v) {
   PointPtr end = new_point3(add_vectors(start->pos, v), start->size);
   ObjPtr middle = new_line2(start, end);
   return Extruded{middle, end};
 }
 
-PointPtr edge_point(ObjPtr edge, int i)
-{
+PointPtr edge_point(ObjPtr edge, int i) {
   auto o = edge->used[std::size_t(i)].obj;
   return std::dynamic_pointer_cast<Point>(o);
 }
 
-ObjPtr new_line()
-{
-  return new_object(LINE);
-}
+ObjPtr new_line() { return new_object(LINE); }
 
-ObjPtr new_line2(PointPtr start, PointPtr end)
-{
+ObjPtr new_line2(PointPtr start, PointPtr end) {
   ObjPtr l = new_line();
   add_use(l, FORWARD, start);
   add_use(l, FORWARD, end);
   return l;
 }
 
-ObjPtr new_line3(Vector origin, Vector span)
-{
+ObjPtr new_line3(Vector origin, Vector span) {
   return extrude_point(new_point2(origin), span).middle;
 }
 
-ObjPtr new_arc()
-{
-  return new_object(ARC);
-}
+ObjPtr new_arc() { return new_object(ARC); }
 
-ObjPtr new_arc2(PointPtr start, PointPtr center,
-    PointPtr end)
-{
+ObjPtr new_arc2(PointPtr start, PointPtr center, PointPtr end) {
   ObjPtr a = new_arc();
   add_use(a, FORWARD, start);
   add_helper(a, center);
@@ -359,39 +298,25 @@ ObjPtr new_arc2(PointPtr start, PointPtr center,
   return a;
 }
 
-PointPtr arc_center(ObjPtr arc)
-{
+PointPtr arc_center(ObjPtr arc) {
   return std::dynamic_pointer_cast<Point>(arc->helpers[0]);
 }
 
-Vector arc_normal(ObjPtr arc)
-{
-  return normalize_vector(
-      cross_product(
-        subtract_vectors(
-          edge_point(arc, 0)->pos,
-          arc_center(arc)->pos),
-        subtract_vectors(
-          edge_point(arc, 1)->pos,
-          arc_center(arc)->pos)));
+Vector arc_normal(ObjPtr arc) {
+  return normalize_vector(cross_product(
+      subtract_vectors(edge_point(arc, 0)->pos, arc_center(arc)->pos),
+      subtract_vectors(edge_point(arc, 1)->pos, arc_center(arc)->pos)));
 }
 
-void print_arc(FILE* f, ObjPtr arc)
-{
+void print_arc(FILE* f, ObjPtr arc) {
   fprintf(f, "%s(%u) = {%u,%u,%u};\n", type_names[arc->type], arc->id,
-      edge_point(arc, 0)->id,
-      arc_center(arc)->id,
-      edge_point(arc, 1)->id);
+          edge_point(arc, 0)->id, arc_center(arc)->id, edge_point(arc, 1)->id);
 }
 
-ObjPtr new_ellipse()
-{
-  return new_object(ELLIPSE);
-}
+ObjPtr new_ellipse() { return new_object(ELLIPSE); }
 
-ObjPtr new_ellipse2(PointPtr start, PointPtr center,
-    PointPtr major_pt, PointPtr end)
-{
+ObjPtr new_ellipse2(PointPtr start, PointPtr center, PointPtr major_pt,
+                    PointPtr end) {
   ObjPtr e = new_ellipse();
   add_use(e, FORWARD, start);
   add_helper(e, center);
@@ -400,101 +325,78 @@ ObjPtr new_ellipse2(PointPtr start, PointPtr center,
   return e;
 }
 
-PointPtr ellipse_center(ObjPtr e)
-{
+PointPtr ellipse_center(ObjPtr e) {
   return std::dynamic_pointer_cast<Point>(e->helpers[0]);
 }
 
-PointPtr ellipse_major_pt(ObjPtr e)
-{
+PointPtr ellipse_major_pt(ObjPtr e) {
   return std::dynamic_pointer_cast<Point>(e->helpers[1]);
 }
 
-void print_ellipse(FILE* f, ObjPtr e)
-{
+void print_ellipse(FILE* f, ObjPtr e) {
   fprintf(f, "%s(%u) = {%u,%u,%u,%u};\n", type_names[e->type], e->id,
-      edge_point(e, 0)->id,
-      ellipse_center(e)->id,
-      ellipse_major_pt(e)->id,
-      edge_point(e, 1)->id);
+          edge_point(e, 0)->id, ellipse_center(e)->id, ellipse_major_pt(e)->id,
+          edge_point(e, 1)->id);
 }
 
-ObjPtr new_spline()
-{
-  return new_object(SPLINE);
-}
+ObjPtr new_spline() { return new_object(SPLINE); }
 
-ObjPtr new_spline2(std::vector<PointPtr> const& pts)
-{
+ObjPtr new_spline2(std::vector<PointPtr> const& pts) {
   assert(pts.size() >= 2);
   auto e = new_spline();
   add_use(e, FORWARD, pts.front());
-  for (size_t i = 1; i < pts.size() - 1; ++i)
-    add_helper(e, pts[i]);
+  for (size_t i = 1; i < pts.size() - 1; ++i) add_helper(e, pts[i]);
   add_use(e, FORWARD, pts.back());
   return e;
 }
 
-ObjPtr new_spline3(std::vector<Vector> const& pts)
-{
+ObjPtr new_spline3(std::vector<Vector> const& pts) {
   std::vector<PointPtr> pts2;
-  for (auto p : pts)
-    pts2.push_back(new_point2(p));
+  for (auto p : pts) pts2.push_back(new_point2(p));
   return new_spline2(pts2);
 }
 
-void print_spline(FILE* f, ObjPtr e)
-{
-  fprintf(f, "%s(%u) = {%u,", type_names[e->type], e->id,
-      edge_point(e, 0)->id);
-  for (auto h : e->helpers)
-    fprintf(f, "%u,", h->id);
+void print_spline(FILE* f, ObjPtr e) {
+  fprintf(f, "%s(%u) = {%u,", type_names[e->type], e->id, edge_point(e, 0)->id);
+  for (auto h : e->helpers) fprintf(f, "%u,", h->id);
   fprintf(f, "%u};\n", edge_point(e, 1)->id);
 }
 
-Extruded extrude_edge(ObjPtr start, Vector v)
-{
+Extruded extrude_edge(ObjPtr start, Vector v) {
   Extruded left = extrude_point(edge_point(start, 0), v);
   Extruded right = extrude_point(edge_point(start, 1), v);
   return extrude_edge2(start, v, left, right);
 }
 
-Extruded extrude_edge2(ObjPtr start, Vector v,
-    Extruded left, Extruded right)
-{
+Extruded extrude_edge2(ObjPtr start, Vector v, Extruded left, Extruded right) {
   auto loop = new_loop();
   add_use(loop, FORWARD, start);
   add_use(loop, FORWARD, right.middle);
   ObjPtr end = 0;
   switch (start->type) {
     case LINE: {
-      end = new_line2(
-          std::dynamic_pointer_cast<Point>(left.end),
-          std::dynamic_pointer_cast<Point>(right.end));
+      end = new_line2(std::dynamic_pointer_cast<Point>(left.end),
+                      std::dynamic_pointer_cast<Point>(right.end));
       break;
     }
     case ARC: {
       PointPtr start_center = arc_center(start);
-      PointPtr end_center = new_point3(
-          add_vectors(start_center->pos, v), start_center->size);
-      end = new_arc2(
-          std::dynamic_pointer_cast<Point>(left.end),
-          end_center,
-          std::dynamic_pointer_cast<Point>(right.end));
+      PointPtr end_center =
+          new_point3(add_vectors(start_center->pos, v), start_center->size);
+      end = new_arc2(std::dynamic_pointer_cast<Point>(left.end), end_center,
+                     std::dynamic_pointer_cast<Point>(right.end));
       break;
     }
     case ELLIPSE: {
       PointPtr start_center = ellipse_center(start);
-      PointPtr end_center = new_point3(
-          add_vectors(start_center->pos, v), start_center->size);
+      PointPtr end_center =
+          new_point3(add_vectors(start_center->pos, v), start_center->size);
       PointPtr start_major_pt = ellipse_major_pt(start);
-      PointPtr end_major_pt = new_point3(
-          add_vectors(start_major_pt->pos, v), start_major_pt->size);
-      end = new_ellipse2(
-          std::dynamic_pointer_cast<Point>(left.end),
-          end_center,
-          end_major_pt,
-          std::dynamic_pointer_cast<Point>(right.end));
+      PointPtr end_major_pt =
+          new_point3(add_vectors(start_major_pt->pos, v), start_major_pt->size);
+      end = new_ellipse2(std::dynamic_pointer_cast<Point>(left.end), end_center,
+                         end_major_pt,
+                         std::dynamic_pointer_cast<Point>(right.end));
       break;
     }
     case SPLINE: {
@@ -509,43 +411,43 @@ Extruded extrude_edge2(ObjPtr start, Vector v,
       end = new_spline2(end_pts);
       break;
     }
-    default: end = 0; break;
+    default:
+      end = 0;
+      break;
   }
   add_use(loop, REVERSE, end);
   add_use(loop, REVERSE, left.middle);
   ObjPtr middle;
   switch (start->type) {
-    case LINE: middle = new_plane2(loop); break;
+    case LINE:
+      middle = new_plane2(loop);
+      break;
     case ARC:
     case ELLIPSE:
-    case SPLINE: middle = new_ruled2(loop); break;
-    default: middle = 0; break;
+    case SPLINE:
+      middle = new_ruled2(loop);
+      break;
+    default:
+      middle = 0;
+      break;
   }
   return Extruded{middle, end};
 }
 
-ObjPtr new_loop()
-{
-  return new_object(LOOP);
-}
+ObjPtr new_loop() { return new_object(LOOP); }
 
-std::vector<PointPtr> loop_points(ObjPtr loop)
-{
+std::vector<PointPtr> loop_points(ObjPtr loop) {
   std::vector<PointPtr> points;
-  for (auto use : loop->used)
-    points.push_back(edge_point(use.obj, use.dir));
+  for (auto use : loop->used) points.push_back(edge_point(use.obj, use.dir));
   return points;
 }
 
-Extruded extrude_loop(ObjPtr start, Vector v)
-{
+Extruded extrude_loop(ObjPtr start, Vector v) {
   ObjPtr shell = new_shell();
   return extrude_loop2(start, v, shell, FORWARD);
 }
 
-Extruded extrude_loop2(ObjPtr start, Vector v,
-    ObjPtr shell, int shell_dir)
-{
+Extruded extrude_loop2(ObjPtr start, Vector v, ObjPtr shell, int shell_dir) {
   ObjPtr end = new_loop();
   std::vector<PointPtr> start_points = loop_points(start);
   int n = size(start_points);
@@ -556,20 +458,18 @@ Extruded extrude_loop2(ObjPtr start, Vector v,
   for (int i = 0; i < n; ++i) {
     auto use = at(start->used, i);
     edge_extrusions.push_back(
-        extrude_edge2(use.obj, v,
-          at(point_extrusions, (i + (use.dir ^ 0)) % n),
-          at(point_extrusions, (i + (use.dir ^ 1)) % n)));
+        extrude_edge2(use.obj, v, at(point_extrusions, (i + (use.dir ^ 0)) % n),
+                      at(point_extrusions, (i + (use.dir ^ 1)) % n)));
   }
   for (int i = 0; i < n; ++i)
     add_use(end, at(start->used, i).dir, at(edge_extrusions, i).end);
   for (int i = 0; i < n; ++i)
-    add_use(shell, at(start->used, i).dir ^ shell_dir, at(edge_extrusions, i).middle);
+    add_use(shell, at(start->used, i).dir ^ shell_dir,
+            at(edge_extrusions, i).middle);
   return Extruded{shell, end};
 }
 
-ObjPtr new_circle(Vector center,
-    Vector normal, Vector x)
-{
+ObjPtr new_circle(Vector center, Vector normal, Vector x) {
   Matrix r = rotation_matrix(normal, PI / 2);
   PointPtr center_point = new_point2(center);
   PointPtr ring_points[4];
@@ -579,15 +479,13 @@ ObjPtr new_circle(Vector center,
   }
   ObjPtr loop = new_loop();
   for (int i = 0; i < 4; ++i) {
-    ObjPtr a = new_arc2(ring_points[i],
-        center_point, ring_points[(i + 1) % 4]);
+    ObjPtr a = new_arc2(ring_points[i], center_point, ring_points[(i + 1) % 4]);
     add_use(loop, FORWARD, a);
   }
   return loop;
 }
 
-ObjPtr new_polyline(std::vector<PointPtr> const& pts)
-{
+ObjPtr new_polyline(std::vector<PointPtr> const& pts) {
   auto loop = new_loop();
   for (std::size_t i = 0; i < pts.size(); ++i) {
     auto line = new_line2(pts[i], pts[(i + 1) % pts.size()]);
@@ -596,64 +494,54 @@ ObjPtr new_polyline(std::vector<PointPtr> const& pts)
   return loop;
 }
 
-ObjPtr new_polyline2(std::vector<Vector> const& vs)
-{
+ObjPtr new_polyline2(std::vector<Vector> const& vs) {
   return new_polyline(new_points(vs));
 }
 
-ObjPtr new_plane()
-{
-  return new_object(PLANE);
-}
+ObjPtr new_plane() { return new_object(PLANE); }
 
-ObjPtr new_plane2(ObjPtr loop)
-{
+ObjPtr new_plane2(ObjPtr loop) {
   ObjPtr p = new_plane();
   add_use(p, FORWARD, loop);
   return p;
 }
 
-ObjPtr new_square(Vector origin,
-    Vector x, Vector y)
-{
+ObjPtr new_square(Vector origin, Vector x, Vector y) {
   return extrude_edge(new_line3(origin, x), y).middle;
 }
 
-ObjPtr new_disk(Vector center,
-    Vector normal, Vector x)
-{
+ObjPtr new_disk(Vector center, Vector normal, Vector x) {
   return new_plane2(new_circle(center, normal, x));
 }
 
-ObjPtr new_polygon(std::vector<Vector> const& vs)
-{
+ObjPtr new_polygon(std::vector<Vector> const& vs) {
   return new_plane2(new_polyline2(vs));
 }
 
-ObjPtr new_ruled()
-{
-  return new_object(RULED);
-}
+ObjPtr new_ruled() { return new_object(RULED); }
 
-ObjPtr new_ruled2(ObjPtr loop)
-{
+ObjPtr new_ruled2(ObjPtr loop) {
   ObjPtr p = new_ruled();
   add_use(p, FORWARD, loop);
   return p;
 }
 
-void add_hole_to_face(ObjPtr face, ObjPtr loop)
-{
+void add_hole_to_face(ObjPtr face, ObjPtr loop) {
   add_use(face, REVERSE, loop);
 }
 
-Extruded extrude_face(ObjPtr face, Vector v)
-{
+Extruded extrude_face(ObjPtr face, Vector v) {
   ObjPtr end;
   switch (face->type) {
-    case PLANE: end = new_plane(); break;
-    case RULED: end = new_ruled(); break;
-    default: end = nullptr; break;
+    case PLANE:
+      end = new_plane();
+      break;
+    case RULED:
+      end = new_ruled();
+      break;
+    default:
+      end = nullptr;
+      break;
   }
   auto shell = new_shell();
   add_use(shell, REVERSE, face);
@@ -666,29 +554,18 @@ Extruded extrude_face(ObjPtr face, Vector v)
   return Extruded{middle, end};
 }
 
-ObjPtr face_loop(ObjPtr face)
-{
-  return face->used[0].obj;
-}
+ObjPtr face_loop(ObjPtr face) { return face->used[0].obj; }
 
-ObjPtr new_shell()
-{
-  return new_object(SHELL);
-}
+ObjPtr new_shell() { return new_object(SHELL); }
 
-void make_hemisphere(ObjPtr circle,
-    PointPtr center, ObjPtr shell,
-    int dir)
-{
+void make_hemisphere(ObjPtr circle, PointPtr center, ObjPtr shell, int dir) {
   assert(circle->used.size() == 4);
   Vector normal = arc_normal(circle->used[0].obj);
-  if (dir == REVERSE)
-    normal = scale_vector(-1, normal);
+  if (dir == REVERSE) normal = scale_vector(-1, normal);
   auto circle_points = loop_points(circle);
-  double radius = vector_norm(
-      subtract_vectors(circle_points[0]->pos, center->pos));
-  Vector cap_pos = add_vectors(center->pos,
-      scale_vector(radius, normal));
+  double radius =
+      vector_norm(subtract_vectors(circle_points[0]->pos, center->pos));
+  Vector cap_pos = add_vectors(center->pos, scale_vector(radius, normal));
   PointPtr cap = new_point2(cap_pos);
   ObjPtr inward[4];
   for (std::size_t i = 0; i < 4; ++i)
@@ -702,9 +579,7 @@ void make_hemisphere(ObjPtr circle,
   }
 }
 
-ObjPtr new_sphere(Vector center,
-    Vector normal, Vector x)
-{
+ObjPtr new_sphere(Vector center, Vector normal, Vector x) {
   ObjPtr circle = new_circle(center, normal, x);
   PointPtr cpt = arc_center(circle->used[0].obj);
   ObjPtr shell = new_shell();
@@ -713,81 +588,55 @@ ObjPtr new_sphere(Vector center,
   return shell;
 }
 
-ObjPtr new_volume()
-{
-  return new_object(VOLUME);
-}
+ObjPtr new_volume() { return new_object(VOLUME); }
 
-ObjPtr new_volume2(ObjPtr shell)
-{
+ObjPtr new_volume2(ObjPtr shell) {
   ObjPtr v = new_object(VOLUME);
   add_use(v, FORWARD, shell);
   return v;
 }
 
-ObjPtr volume_shell(ObjPtr v)
-{
-  return v->used[0].obj;
-}
+ObjPtr volume_shell(ObjPtr v) { return v->used[0].obj; }
 
-ObjPtr new_cube(Vector origin,
-    Vector x, Vector y, Vector z)
-{
+ObjPtr new_cube(Vector origin, Vector x, Vector y, Vector z) {
   return extrude_face(new_square(origin, x, y), z).middle;
 }
 
-ObjPtr get_cube_face(ObjPtr cube, enum cube_face which)
-{
+ObjPtr get_cube_face(ObjPtr cube, enum cube_face which) {
   return cube->used[0].obj->used[which].obj;
 }
 
-ObjPtr new_ball(Vector center,
-    Vector normal, Vector x)
-{
+ObjPtr new_ball(Vector center, Vector normal, Vector x) {
   return new_volume2(new_sphere(center, normal, x));
 }
 
-void insert_into(ObjPtr into, ObjPtr o)
-{
+void insert_into(ObjPtr into, ObjPtr o) {
   add_use(into, REVERSE, o->used[0].obj);
 }
 
-ObjPtr new_group()
-{
-  return new_object(GROUP);
-}
+ObjPtr new_group() { return new_object(GROUP); }
 
-void add_to_group(ObjPtr group, ObjPtr o)
-{
-  add_use(group, FORWARD, o);
-}
+void add_to_group(ObjPtr group, ObjPtr o) { add_use(group, FORWARD, o); }
 
-void weld_volume_face_into(
-    ObjPtr big_volume,
-    ObjPtr small_volume,
-    ObjPtr big_volume_face,
-    ObjPtr small_volume_face)
-{
+void weld_volume_face_into(ObjPtr big_volume, ObjPtr small_volume,
+                           ObjPtr big_volume_face, ObjPtr small_volume_face) {
   insert_into(big_volume_face, small_volume_face);
   add_use(volume_shell(big_volume),
-      !(get_used_dir(volume_shell(small_volume), small_volume_face)),
-      small_volume_face);
+          !(get_used_dir(volume_shell(small_volume), small_volume_face)),
+          small_volume_face);
 }
 
-static int are_parallel(Vector a, Vector b)
-{
-  return 1e-6 > (1.0 - fabs(dot_product(normalize_vector(a),
-                                        normalize_vector(b))));
+static int are_parallel(Vector a, Vector b) {
+  return 1e-6 >
+         (1.0 - fabs(dot_product(normalize_vector(a), normalize_vector(b))));
 }
 
-static int are_perpendicular(Vector a, Vector b)
-{
-  return 1e-6 > (0.0 - fabs(dot_product(normalize_vector(a),
-                                        normalize_vector(b))));
+static int are_perpendicular(Vector a, Vector b) {
+  return 1e-6 >
+         (0.0 - fabs(dot_product(normalize_vector(a), normalize_vector(b))));
 }
 
-Vector eval(ObjPtr o, double const* param)
-{
+Vector eval(ObjPtr o, double const* param) {
   switch (o->type) {
     case POINT: {
       auto p = std::dynamic_pointer_cast<Point>(o);
@@ -798,7 +647,7 @@ Vector eval(ObjPtr o, double const* param)
       PointPtr a = edge_point(o, 0);
       PointPtr b = edge_point(o, 1);
       return add_vectors(scale_vector(1.0 - u, a->pos),
-                         scale_vector(      u, b->pos));
+                         scale_vector(u, b->pos));
     }
     case ARC: {
       double u = param[0];
@@ -808,8 +657,8 @@ Vector eval(ObjPtr o, double const* param)
       Vector n = arc_normal(o);
       Vector ca = subtract_vectors(a->pos, c->pos);
       Vector cb = subtract_vectors(b->pos, c->pos);
-      double full_ang = acos(dot_product(ca, cb) /
-          (vector_norm(ca) * vector_norm(cb)));
+      double full_ang =
+          acos(dot_product(ca, cb) / (vector_norm(ca) * vector_norm(cb)));
       double ang = full_ang * u;
       return rotate_vector(n, ang, ca);
     }
@@ -843,7 +692,8 @@ Vector eval(ObjPtr o, double const* param)
       return add_vectors(c->pos, add_vectors(scale_vector(cos(ang), ca),
                                              scale_vector(sin(ang), cb)));
     }
-    default: return Vector{-42,-42,-42};
+    default:
+      return Vector{-42, -42, -42};
   }
 }
 
@@ -870,8 +720,7 @@ static ObjPtr copy_object(ObjPtr object) {
 
 ObjPtr copy_closure(ObjPtr object) {
   auto closure = get_closure(object, 1);
-  for (size_t i = 0; i < closure.size(); ++i)
-    closure[i]->scratch = i;
+  for (size_t i = 0; i < closure.size(); ++i) closure[i]->scratch = i;
   decltype(closure) out_closure(closure.size());
   for (auto co : closure) {
     auto oco = copy_object(co);
@@ -886,9 +735,8 @@ ObjPtr copy_closure(ObjPtr object) {
       add_use(oco, cou.dir, at(out_closure, idx));
     }
   }
-  for (auto co : closure)
-    co->scratch = -1;
+  for (auto co : closure) co->scratch = -1;
   return out_closure.back();
 }
 
-} // end namespace gmod
+}  // end namespace gmod

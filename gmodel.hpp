@@ -3,8 +3,8 @@
 
 #include <cmath>
 #include <cstdio>
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace gmod {
 
@@ -13,17 +13,17 @@ constexpr double PI = 3.14159265359;
 enum { NTYPES = 11 };
 
 enum {
-  POINT    = 0,
-  LINE     = 1,
-  ARC      = 2,
-  ELLIPSE  = 3,
-  SPLINE   = 4,
-  PLANE    = 5,
-  RULED    = 6,
-  VOLUME   = 7,
-  LOOP     = 8,
-  SHELL    = 9,
-  GROUP    =10
+  POINT = 0,
+  LINE = 1,
+  ARC = 2,
+  ELLIPSE = 3,
+  SPLINE = 4,
+  PLANE = 5,
+  RULED = 6,
+  VOLUME = 7,
+  LOOP = 8,
+  SHELL = 9,
+  GROUP = 10
 };
 
 extern char const* const type_names[NTYPES];
@@ -79,113 +79,78 @@ void add_use(ObjPtr by, int dir, ObjPtr of);
 void add_helper(ObjPtr to, ObjPtr h);
 std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers);
 
-struct Vector {double x, y, z;};
-struct Matrix {Vector x, y, z;}; /* columns, not rows ! */
+struct Vector {
+  double x, y, z;
+};
+struct Matrix {
+  Vector x, y, z;
+}; /* columns, not rows ! */
 
-static inline Vector add_vectors(
-    Vector a, Vector b)
-{
+static inline Vector add_vectors(Vector a, Vector b) {
   return Vector{a.x + b.x, a.y + b.y, a.z + b.z};
 }
 
-static inline Vector subtract_vectors(
-    Vector a, Vector b)
-{
+static inline Vector subtract_vectors(Vector a, Vector b) {
   return Vector{a.x - b.x, a.y - b.y, a.z - b.z};
 }
 
-static inline Vector scale_vector(
-    double a, Vector b)
-{
+static inline Vector scale_vector(double a, Vector b) {
   return Vector{a * b.x, a * b.y, a * b.z};
 }
 
-static inline double dot_product(
-    Vector a, Vector b)
-{
+static inline double dot_product(Vector a, Vector b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-static inline double vector_norm(Vector a)
-{
-  return sqrt(dot_product(a, a));
-}
+static inline double vector_norm(Vector a) { return sqrt(dot_product(a, a)); }
 
-static inline Vector normalize_vector(Vector v)
-{
+static inline Vector normalize_vector(Vector v) {
   return scale_vector(1.0 / vector_norm(v), v);
 }
 
-static inline Vector matrix_vector_product(
-    Matrix a, Vector b)
-{
-  return add_vectors(scale_vector(b.x, a.x),
-         add_vectors(scale_vector(b.y, a.y),
-                     scale_vector(b.z, a.z)));
+static inline Vector matrix_vector_product(Matrix a, Vector b) {
+  return add_vectors(
+      scale_vector(b.x, a.x),
+      add_vectors(scale_vector(b.y, a.y), scale_vector(b.z, a.z)));
 }
 
-static inline Matrix cross_product_matrix(
-    Vector a)
-{
-  return Matrix{
-    Vector{    0,  a.z, -a.y},
-    Vector{ -a.z,    0,  a.x},
-    Vector{  a.y, -a.x,    0}};
+static inline Matrix cross_product_matrix(Vector a) {
+  return Matrix{Vector{0, a.z, -a.y}, Vector{-a.z, 0, a.x},
+                Vector{a.y, -a.x, 0}};
 }
 
-static inline Vector cross_product(
-    Vector a, Vector b)
-{
-  return matrix_vector_product(
-      cross_product_matrix(a), b);
+static inline Vector cross_product(Vector a, Vector b) {
+  return matrix_vector_product(cross_product_matrix(a), b);
 }
 
-static inline Matrix tensor_product_matrix(
-    Vector a, Vector b)
-{
-  return Matrix{
-    scale_vector(b.x, a),
-    scale_vector(b.y, a),
-    scale_vector(b.z, a)};
+static inline Matrix tensor_product_matrix(Vector a, Vector b) {
+  return Matrix{scale_vector(b.x, a), scale_vector(b.y, a),
+                scale_vector(b.z, a)};
 }
 
-static inline Matrix identity_matrix()
-{
-  return Matrix{
-    Vector{1,0,0},
-    Vector{0,1,0},
-    Vector{0,0,1}};
+static inline Matrix identity_matrix() {
+  return Matrix{Vector{1, 0, 0}, Vector{0, 1, 0}, Vector{0, 0, 1}};
 }
 
-static inline Matrix scale_matrix(double a,
-    Matrix b)
-{
-  return Matrix{
-    scale_vector(a, b.x),
-    scale_vector(a, b.y),
-    scale_vector(a, b.z)};
+static inline Matrix scale_matrix(double a, Matrix b) {
+  return Matrix{scale_vector(a, b.x), scale_vector(a, b.y),
+                scale_vector(a, b.z)};
 }
 
-static inline Matrix add_matrices(
-    Matrix a, Matrix b)
-{
-  return Matrix{
-    add_vectors(a.x, b.x),
-    add_vectors(a.y, b.y),
-    add_vectors(a.z, b.z)};
+static inline Matrix add_matrices(Matrix a, Matrix b) {
+  return Matrix{add_vectors(a.x, b.x), add_vectors(a.y, b.y),
+                add_vectors(a.z, b.z)};
 }
 
-static inline Matrix rotation_matrix(Vector axis, double angle)
-{
-  return add_matrices(scale_matrix(cos(angle), identity_matrix()),
-         add_matrices(scale_matrix(sin(angle), cross_product_matrix(axis)),
-                      scale_matrix(1 - cos(angle),
-                                   tensor_product_matrix(axis, axis))));
+static inline Matrix rotation_matrix(Vector axis, double angle) {
+  return add_matrices(
+      scale_matrix(cos(angle), identity_matrix()),
+      add_matrices(
+          scale_matrix(sin(angle), cross_product_matrix(axis)),
+          scale_matrix(1 - cos(angle), tensor_product_matrix(axis, axis))));
 }
 
-static inline Vector rotate_vector(Vector axis, double angle,
-    Vector v)
-{
+static inline Vector rotate_vector(Vector axis, double angle, Vector v) {
   return matrix_vector_product(rotation_matrix(axis, angle), v);
 }
 
@@ -220,15 +185,14 @@ ObjPtr new_line2(PointPtr start, PointPtr end);
 ObjPtr new_line3(Vector origin, Vector span);
 
 ObjPtr new_arc();
-ObjPtr new_arc2(PointPtr start, PointPtr center,
-    PointPtr end);
+ObjPtr new_arc2(PointPtr start, PointPtr center, PointPtr end);
 PointPtr arc_center(ObjPtr arc);
 Vector arc_normal(ObjPtr arc);
 void print_arc(FILE* f, ObjPtr arc);
 
 ObjPtr new_ellipse();
-ObjPtr new_ellipse2(PointPtr start, PointPtr center,
-    PointPtr major_pt, PointPtr end);
+ObjPtr new_ellipse2(PointPtr start, PointPtr center, PointPtr major_pt,
+                    PointPtr end);
 PointPtr ellipse_center(ObjPtr e);
 PointPtr ellipse_major_pt(ObjPtr e);
 void print_ellipse(FILE* f, ObjPtr e);
@@ -239,27 +203,22 @@ ObjPtr new_spline3(std::vector<Vector> const& pts);
 void print_spline(FILE* f, ObjPtr e);
 
 Extruded extrude_edge(ObjPtr start, Vector v);
-Extruded extrude_edge2(ObjPtr start, Vector v,
-    Extruded left, Extruded right);
+Extruded extrude_edge2(ObjPtr start, Vector v, Extruded left, Extruded right);
 
 ObjPtr new_loop();
 std::vector<PointPtr> loop_points(ObjPtr loop);
 Extruded extrude_loop(ObjPtr start, Vector v);
-Extruded extrude_loop2(ObjPtr start, Vector v,
-    ObjPtr shell, int shell_dir);
+Extruded extrude_loop2(ObjPtr start, Vector v, ObjPtr shell, int shell_dir);
 
-ObjPtr new_circle(Vector center,
-    Vector normal, Vector x);
+ObjPtr new_circle(Vector center, Vector normal, Vector x);
 ObjPtr new_polyline(std::vector<PointPtr> const& pts);
 ObjPtr new_polyline2(std::vector<Vector> const& vs);
 
 ObjPtr new_plane();
 ObjPtr new_plane2(ObjPtr loop);
 
-ObjPtr new_square(Vector origin,
-    Vector x, Vector y);
-ObjPtr new_disk(Vector center,
-    Vector normal, Vector x);
+ObjPtr new_square(Vector origin, Vector x, Vector y);
+ObjPtr new_disk(Vector center, Vector normal, Vector x);
 ObjPtr new_polygon(std::vector<Vector> const& vs);
 
 ObjPtr new_ruled();
@@ -271,43 +230,28 @@ ObjPtr face_loop(ObjPtr face);
 
 ObjPtr new_shell();
 
-void make_hemisphere(ObjPtr circle,
-    PointPtr center, ObjPtr shell,
-    int dir);
-ObjPtr new_sphere(Vector center,
-    Vector normal, Vector x);
+void make_hemisphere(ObjPtr circle, PointPtr center, ObjPtr shell, int dir);
+ObjPtr new_sphere(Vector center, Vector normal, Vector x);
 
 ObjPtr new_volume();
 ObjPtr new_volume2(ObjPtr shell);
 ObjPtr volume_shell(ObjPtr v);
 
-ObjPtr new_cube(Vector origin,
-    Vector x, Vector y, Vector z);
+ObjPtr new_cube(Vector origin, Vector x, Vector y, Vector z);
 
-enum cube_face {
-  BOTTOM,
-  TOP,
-  FRONT,
-  RIGHT,
-  BACK,
-  LEFT
-};
+enum cube_face { BOTTOM, TOP, FRONT, RIGHT, BACK, LEFT };
 
 ObjPtr get_cube_face(ObjPtr cube, enum cube_face which);
 
-ObjPtr new_ball(Vector center,
-    Vector normal, Vector x);
+ObjPtr new_ball(Vector center, Vector normal, Vector x);
 
 void insert_into(ObjPtr into, ObjPtr f);
 
 ObjPtr new_group();
 void add_to_group(ObjPtr group, ObjPtr o);
 
-void weld_volume_face_into(
-    ObjPtr big_volume,
-    ObjPtr small_volume,
-    ObjPtr big_volume_face,
-    ObjPtr small_volume_face);
+void weld_volume_face_into(ObjPtr big_volume, ObjPtr small_volume,
+                           ObjPtr big_volume_face, ObjPtr small_volume_face);
 
 Vector eval(ObjPtr o, double const* param);
 
@@ -315,7 +259,7 @@ void transform_closure(ObjPtr object, Matrix linear, Vector translation);
 
 ObjPtr copy_closure(ObjPtr object);
 
-} // end namespace gmod
+}  // end namespace gmod
 
 static inline gmod::Vector operator+(gmod::Vector a, gmod::Vector b) {
   return gmod::add_vectors(a, b);
