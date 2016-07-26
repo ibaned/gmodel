@@ -42,9 +42,9 @@ int const type_dims[NTYPES] = {
     /* PLANE   = */ 2,
     /* RULED   = */ 2,
     /* VOLUME  = */ 3,
-    /* LOOP    = */ 0,
-    /* SHELL   = */ 0,
-    /* GROUP   = */ 0};
+    /* LOOP    = */ -1,
+    /* SHELL   = */ -1,
+    /* GROUP   = */ -1};
 
 template <typename T>
 static T& at(std::vector<T>& v, int i) {
@@ -552,6 +552,7 @@ void add_hole_to_face(ObjPtr face, ObjPtr loop) {
 }
 
 Extruded extrude_face(ObjPtr face, Vector v) {
+  assert(type_dims[face->type] == 2);
   ObjPtr end;
   switch (face->type) {
     case PLANE:
