@@ -262,6 +262,8 @@ void transform_closure(ObjPtr object, Matrix linear, Vector translation);
 
 ObjPtr copy_closure(ObjPtr object);
 
+ObjPtr collect_assembly_shell(ObjPtr assembly);
+
 }  // end namespace gmod
 
 static inline gmod::Vector operator+(gmod::Vector a, gmod::Vector b) {

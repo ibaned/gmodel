@@ -1,5 +1,6 @@
 #include "gmodel.hpp"
 
+#include <map>
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -772,6 +773,28 @@ ObjPtr copy_closure(ObjPtr object) {
   }
   for (auto co : closure) co->scratch = -1;
   return out_closure.back();
+}
+
+ObjPtr collect_assembly_shell(ObjPtr assembly) {
+  std::vector<Use> uses;
+  for (auto vol_use : assembly->used) {
+    auto vol = vol_use.obj;
+    auto vol_shell = volume_shell(vol);
+    for (auto face_use : vol_shell->used) {
+      uses.push_back(face_use);
+    }
+  }
+  for (auto use : uses)
+    use.obj->scratch = 0;
+  for (auto use : uses)
+    ++(use.obj->scratch);
+  auto shell = new_shell();
+  for (auto use : uses)
+    if (use.obj->scratch == 1)
+      add_use(shell, use.dir, use.obj);
+  for (auto use : uses)
+    use.obj->scratch = -1;
+  return shell;
 }
 
 }  // end namespace gmod
