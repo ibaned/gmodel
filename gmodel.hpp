@@ -311,7 +311,9 @@ void weld_volume_face_into(
 
 Vector eval(ObjPtr o, double const* param);
 
-void transform_object(ObjPtr object, Matrix linear, Vector translation);
+void transform_closure(ObjPtr object, Matrix linear, Vector translation);
+
+ObjPtr copy_closure(ObjPtr object);
 
 } // end namespace gmod
 

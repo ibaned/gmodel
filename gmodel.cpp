@@ -847,7 +847,7 @@ Vector eval(ObjPtr o, double const* param)
   }
 }
 
-void transform_object(ObjPtr object, Matrix linear, Vector translation) {
+void transform_closure(ObjPtr object, Matrix linear, Vector translation) {
   auto closure = get_closure(object, 1);
   for (auto co : closure) {
     if (co->type == POINT) {
@@ -855,6 +855,40 @@ void transform_object(ObjPtr object, Matrix linear, Vector translation) {
       pt->pos = (linear * (pt->pos)) + translation;
     }
   }
+}
+
+static ObjPtr copy_object(ObjPtr object) {
+  ObjPtr out;
+  if (object->type == POINT) {
+    auto point = std::dynamic_pointer_cast<Point>(object);
+    out = new_point3(point->pos, point->size);
+  } else {
+    out = new_object(object->type);
+  }
+  return out;
+}
+
+ObjPtr copy_closure(ObjPtr object) {
+  auto closure = get_closure(object, 1);
+  for (size_t i = 0; i < closure.size(); ++i)
+    closure[i]->scratch = i;
+  decltype(closure) out_closure(closure.size());
+  for (auto co : closure) {
+    auto oco = copy_object(co);
+    for (auto coh : co->helpers) {
+      auto idx = coh->scratch;
+      assert(idx < co->scratch);
+      oco->helpers.push_back(at(out_closure, idx));
+    }
+    for (auto cou : co->used) {
+      auto idx = cou.obj->scratch;
+      assert(idx < co->scratch);
+      add_use(oco, cou.dir, at(out_closure, idx));
+    }
+  }
+  for (auto co : closure)
+    co->scratch = -1;
+  return out_closure.back();
 }
 
 } // end namespace gmod
