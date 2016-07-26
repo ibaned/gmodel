@@ -52,7 +52,7 @@ struct Object {
   int id;
   std::vector<Use> used;
   std::vector<ObjPtr> helpers;
-  int visited;
+  int scratch;
   Object(int type);
   virtual ~Object();
 };

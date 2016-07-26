@@ -83,7 +83,7 @@ static int nlive_objects = 0;
 Object::Object(int type_):
   type(type_),
   id(next_id++),
-  visited(0)
+  scratch(-1)
 {
   ++nlive_objects;
 }
@@ -250,21 +250,21 @@ std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers)
     ObjPtr current = queue[first++];
     for (auto use : current->used) {
       auto child = use.obj;
-      if (!child->visited) {
-        child->visited = 1;
+      if (child->scratch == -1) {
+        child->scratch = 1;
         queue.push_back(child);
       }
     }
     if (include_helpers)
       for (auto child : current->helpers) {
-        if (!child->visited) {
-          child->visited = 1;
+        if (child->scratch == -1) {
+          child->scratch = 1;
           queue.push_back(child);
         }
       }
   }
   for (std::size_t i = 0; i < queue.size(); ++i)
-    queue[i]->visited = 0;
+    queue[i]->scratch = -1;
   return queue;
 }
 
