@@ -129,11 +129,11 @@ void print_object_physical(FILE* f, ObjPtr obj)
 void print_closure(FILE* f, ObjPtr obj)
 {
   auto closure = get_closure(obj, 1);
-  for (auto it = closure.rbegin(); it != closure.rend(); ++it)
-    print_object(f, *it);
+  for (auto co : closure)
+    print_object(f, co);
   closure = get_closure(obj, 0);
-  for (auto it = closure.rbegin(); it != closure.rend(); ++it)
-    print_object_physical(f, *it);
+  for (auto co : closure)
+    print_object_physical(f, co);
 }
 
 void write_closure_to_geo(ObjPtr obj, char const* filename)
@@ -219,8 +219,8 @@ void print_closure_dmg(FILE* f, ObjPtr obj)
       count_of_dim(closure, 1),
       count_of_dim(closure, 0));
   fprintf(f, "0 0 0\n0 0 0\n");
-  for (auto it = closure.rbegin(); it != closure.rend(); ++it)
-    print_object_dmg(f, *it);
+  for (auto co : closure)
+    print_object_dmg(f, co);
 }
 
 void write_closure_to_dmg(ObjPtr obj, char const* filename)
@@ -265,6 +265,7 @@ std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers)
   }
   for (std::size_t i = 0; i < queue.size(); ++i)
     queue[i]->scratch = -1;
+  std::reverse(queue.begin(), queue.end());
   return queue;
 }
 
