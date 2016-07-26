@@ -31,6 +31,7 @@ extern char const* const physical_type_names[NTYPES];
 extern int const type_dims[NTYPES];
 
 int is_entity(int t);
+int is_face(int t);
 int is_boundary(int t);
 
 enum {

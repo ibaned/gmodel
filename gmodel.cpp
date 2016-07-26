@@ -18,7 +18,7 @@ char const* const type_names[NTYPES] = {
     /* VOLUME  = */ "Volume",
     /* LOOP    = */ "Line Loop",
     /* SHELL   = */ "Surface Loop",
-    /* GROUP   = */ 0};
+    /* GROUP   = */ "Gmodel Group"};
 
 char const* const physical_type_names[NTYPES] = {
     /* POINT   = */ "Physical Point",
@@ -62,6 +62,8 @@ static int size(std::vector<T> const& v) {
 }
 
 int is_entity(int t) { return t <= VOLUME; }
+
+int is_face(int t) { return t == PLANE || t == RULED; }
 
 int is_boundary(int t) { return t == LOOP || t == SHELL; }
 
@@ -633,7 +635,17 @@ ObjPtr new_ball(Vector center, Vector normal, Vector x) {
 }
 
 void insert_into(ObjPtr into, ObjPtr o) {
-  add_use(into, REVERSE, o->used[0].obj);
+  if (is_face(o->type)) {
+    assert(is_face(into->type));
+    add_use(into, REVERSE, face_loop(o));
+  } else if (o->type == VOLUME) {
+    assert(into->type == VOLUME);
+    add_use(into, REVERSE, volume_shell(o));
+  } else {
+    fprintf(stderr, "unexpected inserted type \"%s\"\n",
+        type_names[o->type]);
+    abort();
+  }
 }
 
 ObjPtr new_group() { return new_object(GROUP); }
