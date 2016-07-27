@@ -21,7 +21,7 @@ This should install Gmodel under the given prefix in a way you can
 access from your own CMake files using these CMake commands:
 
 ```cmake
-find_package(Gmodel 1.2.0)
+find_package(Gmodel 1.3.0)
 target_link_libraries(myprogram gmodel)
 ```
 
