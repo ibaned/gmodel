@@ -68,6 +68,14 @@ int is_face(int t) { return t == PLANE || t == RULED; }
 
 int is_boundary(int t) { return t == LOOP || t == SHELL; }
 
+int get_boundary_type(int cell_type) {
+  switch (type_dims[cell_type]) {
+    case 3: return SHELL;
+    case 2: return LOOP;
+    default: return -1;
+  }
+}
+
 static int next_id = 0;
 static int nlive_objects = 0;
 
@@ -775,26 +783,30 @@ ObjPtr copy_closure(ObjPtr object) {
   return out_closure.back();
 }
 
-ObjPtr collect_assembly_shell(ObjPtr assembly) {
+ObjPtr collect_assembly_boundary(ObjPtr assembly) {
   std::vector<Use> uses;
-  for (auto vol_use : assembly->used) {
-    auto vol = vol_use.obj;
-    auto vol_shell = volume_shell(vol);
-    for (auto face_use : vol_shell->used) {
-      uses.push_back(face_use);
+  int cell_type = -1;
+  for (auto cell_use : assembly->used) {
+    auto cell = cell_use.obj;
+    if (cell_type == -1)
+      cell_type = cell->type;
+    assert(cell_type == cell->type);
+    auto boundary = cell->used[0].obj;
+    for (auto side_use : boundary->used) {
+      uses.push_back(side_use);
     }
   }
   for (auto use : uses)
     use.obj->scratch = 0;
   for (auto use : uses)
     ++(use.obj->scratch);
-  auto shell = new_shell();
+  auto boundary = new_object(get_boundary_type(cell_type));
   for (auto use : uses)
     if (use.obj->scratch == 1)
-      add_use(shell, use.dir, use.obj);
+      boundary->used.push_back(use);
   for (auto use : uses)
     use.obj->scratch = -1;
-  return shell;
+  return boundary;
 }
 
 }  // end namespace gmod

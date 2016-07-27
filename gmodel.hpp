@@ -34,6 +34,8 @@ int is_entity(int t);
 int is_face(int t);
 int is_boundary(int t);
 
+int get_boundary_type(int cell_type);
+
 enum {
   FORWARD = 0,
   REVERSE = 1,
