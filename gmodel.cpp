@@ -767,7 +767,8 @@ static ObjPtr copy_object(ObjPtr object) {
 
 ObjPtr copy_closure(ObjPtr object) {
   auto closure = get_closure(object, 1);
-  for (size_t i = 0; i < closure.size(); ++i) closure[i]->scratch = i;
+  for (size_t i = 0; i < closure.size(); ++i) closure[i]->scratch =
+    static_cast<int>(i);
   decltype(closure) out_closure;
   for (auto co : closure) {
     auto oco = copy_object(co);
