@@ -157,6 +157,7 @@ void print_object_dmg(FILE* f, ObjPtr obj) {
     } break;
     case LINE:
     case ARC:
+    case SPLINE:
     case ELLIPSE: {
       fprintf(f, "%u %u %u\n", obj->id, edge_point(obj, 0)->id,
               edge_point(obj, 1)->id);
