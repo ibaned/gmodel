@@ -508,14 +508,22 @@ Extruded extrude_loop3(ObjPtr start, Transform tr, ObjPtr shell, int shell_dir) 
   auto start_edges = get_objs_used(start);
   auto point_extrusions = extrude_points(start_points, tr);
   auto edge_extrusions = extrude_edges(start_edges, tr, point_extrusions);
+  auto result = extrude_loop4(start, shell, shell_dir, edge_extrusions);
   for (auto obj : start_points) obj->scratch = -1;
   for (auto obj : start_edges) obj->scratch = -1;
-  auto n = int(start_edges.size());
-  for (int i = 0; i < n; ++i)
-    add_use(end, at(start->used, i).dir, at(edge_extrusions, i).end);
-  for (int i = 0; i < n; ++i)
-    add_use(shell, at(start->used, i).dir ^ shell_dir,
-            at(edge_extrusions, i).middle);
+  return result;
+}
+
+Extruded extrude_loop4(ObjPtr start, ObjPtr shell, int shell_dir,
+    std::vector<Extruded> const& edge_extrusions) {
+  ObjPtr end = new_loop();
+  for (auto use : start->used) {
+    add_use(end, use.dir, at(edge_extrusions, use.obj->scratch).end);
+  }
+  for (auto use : start->used) {
+    add_use(shell, use.dir ^ shell_dir,
+        at(edge_extrusions, use.obj->scratch).middle);
+  }
   return Extruded{shell, end};
 }
 
