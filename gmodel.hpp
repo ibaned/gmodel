@@ -237,6 +237,7 @@ ObjPtr new_ruled2(ObjPtr loop);
 
 void add_hole_to_face(ObjPtr face, ObjPtr loop);
 Extruded extrude_face(ObjPtr face, Vector v);
+Extruded extrude_face2(ObjPtr face, Transform tr);
 ObjPtr face_loop(ObjPtr face);
 
 ObjPtr new_shell();

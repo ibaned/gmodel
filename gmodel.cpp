@@ -576,6 +576,10 @@ void add_hole_to_face(ObjPtr face, ObjPtr loop) {
 }
 
 Extruded extrude_face(ObjPtr face, Vector v) {
+  return extrude_face2(face, [=](Vector a){return a + v;});
+}
+
+Extruded extrude_face2(ObjPtr face, Transform tr) {
   assert(type_dims[face->type] == 2);
   ObjPtr end;
   switch (face->type) {
@@ -593,7 +597,7 @@ Extruded extrude_face(ObjPtr face, Vector v) {
   add_use(shell, REVERSE, face);
   add_use(shell, FORWARD, end);
   for (auto use : face->used) {
-    auto end_loop = extrude_loop2(use.obj, v, shell, use.dir).end;
+    auto end_loop = extrude_loop3(use.obj, tr, shell, use.dir).end;
     add_use(end, use.dir, end_loop);
   }
   auto middle = new_volume2(shell);
