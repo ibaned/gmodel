@@ -277,7 +277,11 @@ void print_point(FILE* f, PointPtr p) {
 }
 
 Extruded extrude_point(PointPtr start, Vector v) {
-  PointPtr end = new_point3(add_vectors(start->pos, v), start->size);
+  return extrude_point2(start, [=](Vector a){return a + v;});
+}
+
+Extruded extrude_point2(PointPtr start, Transform tr) {
+  PointPtr end = new_point3(tr(start->pos), start->size);
   ObjPtr middle = new_line2(start, end);
   return Extruded{middle, end};
 }

@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <memory>
 #include <vector>
+#include <functional>
 
 namespace gmod {
 
@@ -180,7 +181,10 @@ struct Extruded {
   ObjPtr end;
 };
 
+typedef std::function<Vector(Vector)> Transform;
+
 Extruded extrude_point(PointPtr start, Vector v);
+Extruded extrude_point2(PointPtr start, Transform tr);
 PointPtr edge_point(ObjPtr edge, int i);
 
 ObjPtr new_line();
