@@ -385,6 +385,10 @@ Extruded extrude_edge(ObjPtr start, Vector v) {
 }
 
 Extruded extrude_edge2(ObjPtr start, Vector v, Extruded left, Extruded right) {
+  return extrude_edge3(start, [=](Vector a){return a + v;}, left, right);
+}
+
+Extruded extrude_edge3(ObjPtr start, Transform tr, Extruded left, Extruded right) {
   auto loop = new_loop();
   add_use(loop, FORWARD, start);
   add_use(loop, FORWARD, right.middle);
@@ -398,7 +402,7 @@ Extruded extrude_edge2(ObjPtr start, Vector v, Extruded left, Extruded right) {
     case ARC: {
       PointPtr start_center = arc_center(start);
       PointPtr end_center =
-          new_point3(add_vectors(start_center->pos, v), start_center->size);
+          new_point3(tr(start_center->pos), start_center->size);
       end = new_arc2(std::dynamic_pointer_cast<Point>(left.end), end_center,
                      std::dynamic_pointer_cast<Point>(right.end));
       break;
@@ -406,10 +410,10 @@ Extruded extrude_edge2(ObjPtr start, Vector v, Extruded left, Extruded right) {
     case ELLIPSE: {
       PointPtr start_center = ellipse_center(start);
       PointPtr end_center =
-          new_point3(add_vectors(start_center->pos, v), start_center->size);
+          new_point3(tr(start_center->pos), start_center->size);
       PointPtr start_major_pt = ellipse_major_pt(start);
       PointPtr end_major_pt =
-          new_point3(add_vectors(start_major_pt->pos, v), start_major_pt->size);
+          new_point3(tr(start_major_pt->pos), start_major_pt->size);
       end = new_ellipse2(std::dynamic_pointer_cast<Point>(left.end), end_center,
                          end_major_pt,
                          std::dynamic_pointer_cast<Point>(right.end));
@@ -420,7 +424,7 @@ Extruded extrude_edge2(ObjPtr start, Vector v, Extruded left, Extruded right) {
       end_pts.push_back(std::dynamic_pointer_cast<Point>(left.end));
       for (auto h : start->helpers) {
         auto start_h = std::dynamic_pointer_cast<Point>(h);
-        auto end_h = new_point3(add_vectors(start_h->pos, v), start_h->size);
+        auto end_h = new_point3(tr(start_h->pos), start_h->size);
         end_pts.push_back(end_h);
       }
       end_pts.push_back(std::dynamic_pointer_cast<Point>(right.end));

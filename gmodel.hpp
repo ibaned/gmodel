@@ -211,6 +211,7 @@ void print_spline(FILE* f, ObjPtr e);
 
 Extruded extrude_edge(ObjPtr start, Vector v);
 Extruded extrude_edge2(ObjPtr start, Vector v, Extruded left, Extruded right);
+Extruded extrude_edge3(ObjPtr start, Transform tr, Extruded left, Extruded right);
 
 ObjPtr new_loop();
 std::vector<PointPtr> loop_points(ObjPtr loop);
