@@ -64,6 +64,7 @@ struct Object {
 ObjPtr new_object(int type);
 
 int get_used_dir(ObjPtr user, ObjPtr used);
+std::vector<ObjPtr> get_objs_used(ObjPtr user);
 
 void print_object(FILE* f, ObjPtr obj);
 void print_object_physical(FILE* f, ObjPtr obj);
@@ -185,6 +186,8 @@ typedef std::function<Vector(Vector)> Transform;
 
 Extruded extrude_point(PointPtr start, Vector v);
 Extruded extrude_point2(PointPtr start, Transform tr);
+std::vector<Extruded> extrude_points(std::vector<PointPtr> const& points,
+    Transform tr);
 PointPtr edge_point(ObjPtr edge, int i);
 
 ObjPtr new_line();
@@ -212,6 +215,8 @@ void print_spline(FILE* f, ObjPtr e);
 Extruded extrude_edge(ObjPtr start, Vector v);
 Extruded extrude_edge2(ObjPtr start, Vector v, Extruded left, Extruded right);
 Extruded extrude_edge3(ObjPtr start, Transform tr, Extruded left, Extruded right);
+std::vector<Extruded> extrude_edges(std::vector<ObjPtr> const& edges,
+    Transform tr, std::vector<Extruded> const& point_extrusions);
 
 ObjPtr new_loop();
 std::vector<PointPtr> loop_points(ObjPtr loop);

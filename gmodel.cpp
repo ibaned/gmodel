@@ -94,6 +94,12 @@ int get_used_dir(ObjPtr user, ObjPtr used) {
   return it->dir;
 }
 
+std::vector<ObjPtr> get_objs_used(ObjPtr user) {
+  std::vector<ObjPtr> objs;
+  for (auto use : user->used) objs.push_back(use.obj);
+  return objs;
+}
+
 void print_object(FILE* f, ObjPtr obj) {
   switch (obj->type) {
     case POINT:
@@ -286,6 +292,17 @@ Extruded extrude_point2(PointPtr start, Transform tr) {
   return Extruded{middle, end};
 }
 
+std::vector<Extruded> extrude_points(std::vector<PointPtr> const& points,
+    Transform tr) {
+  std::vector<Extruded> extrusions;
+  int i = 0;
+  for (auto point : points) {
+    extrusions.push_back(extrude_point2(point, tr));
+    point->scratch = i++;
+  }
+  return extrusions;
+}
+
 PointPtr edge_point(ObjPtr edge, int i) {
   auto o = edge->used[std::size_t(i)].obj;
   return std::dynamic_pointer_cast<Point>(o);
@@ -454,6 +471,20 @@ Extruded extrude_edge3(ObjPtr start, Transform tr, Extruded left, Extruded right
   return Extruded{middle, end};
 }
 
+std::vector<Extruded> extrude_edges(std::vector<ObjPtr> const& edges,
+    Transform tr, std::vector<Extruded> const& point_extrusions) {
+  std::vector<Extruded> edge_extrusions;
+  int i = 0;
+  for (auto edge : edges) {
+    edge_extrusions.push_back(
+        extrude_edge3(edge, tr,
+          at(point_extrusions, edge_point(edge, 0)->scratch),
+          at(point_extrusions, edge_point(edge, 1)->scratch)));
+    edge->scratch = i++;
+  }
+  return edge_extrusions;
+}
+
 ObjPtr new_loop() { return new_object(LOOP); }
 
 std::vector<PointPtr> loop_points(ObjPtr loop) {
@@ -473,18 +504,13 @@ Extruded extrude_loop2(ObjPtr start, Vector v, ObjPtr shell, int shell_dir) {
 
 Extruded extrude_loop3(ObjPtr start, Transform tr, ObjPtr shell, int shell_dir) {
   ObjPtr end = new_loop();
-  std::vector<PointPtr> start_points = loop_points(start);
-  int n = size(start_points);
-  std::vector<Extruded> point_extrusions;
-  for (auto start_point : start_points)
-    point_extrusions.push_back(extrude_point2(start_point, tr));
-  std::vector<Extruded> edge_extrusions;
-  for (int i = 0; i < n; ++i) {
-    auto use = at(start->used, i);
-    edge_extrusions.push_back(
-        extrude_edge3(use.obj, tr, at(point_extrusions, (i + (use.dir ^ 0)) % n),
-                      at(point_extrusions, (i + (use.dir ^ 1)) % n)));
-  }
+  auto start_points = loop_points(start);
+  auto start_edges = get_objs_used(start);
+  auto point_extrusions = extrude_points(start_points, tr);
+  auto edge_extrusions = extrude_edges(start_edges, tr, point_extrusions);
+  for (auto obj : start_points) obj->scratch = -1;
+  for (auto obj : start_edges) obj->scratch = -1;
+  auto n = int(start_edges.size());
   for (int i = 0; i < n; ++i)
     add_use(end, at(start->used, i).dir, at(edge_extrusions, i).end);
   for (int i = 0; i < n; ++i)
