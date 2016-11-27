@@ -249,6 +249,21 @@ std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers) {
   return queue;
 }
 
+std::vector<ObjPtr> filter_by_dim(std::vector<ObjPtr> const& objs, int dim) {
+  std::vector<ObjPtr> out;
+  for (auto obj : objs) if (type_dims[obj->type] == dim) out.push_back(obj);
+  return out;
+}
+
+std::vector<PointPtr> filter_points(std::vector<ObjPtr> const& objs) {
+  auto point_objs = filter_by_dim(objs, 0);
+  std::vector<PointPtr> points;
+  for (auto obj : point_objs) {
+    points.push_back(std::dynamic_pointer_cast<Point>(obj));
+  }
+  return points;
+}
+
 Point::Point() : Object(POINT) {}
 
 Point::~Point() {}
@@ -614,6 +629,18 @@ Extruded extrude_face(ObjPtr face, Vector v) {
 }
 
 Extruded extrude_face2(ObjPtr face, Transform tr) {
+  auto closure = get_closure(face, 0);
+  auto start_points = filter_points(closure);
+  auto start_edges = filter_by_dim(closure, 1);
+  auto point_extrusions = extrude_points(start_points, tr);
+  auto edge_extrusions = extrude_edges(start_edges, tr, point_extrusions);
+  auto result = extrude_face3(face, edge_extrusions);
+  for (auto obj : start_points) obj->scratch = -1;
+  for (auto obj : start_edges) obj->scratch = -1;
+  return result;
+}
+
+Extruded extrude_face3(ObjPtr face, std::vector<Extruded> const& edge_extrusions) {
   assert(type_dims[face->type] == 2);
   ObjPtr end;
   switch (face->type) {
@@ -631,11 +658,33 @@ Extruded extrude_face2(ObjPtr face, Transform tr) {
   add_use(shell, REVERSE, face);
   add_use(shell, FORWARD, end);
   for (auto use : face->used) {
-    auto end_loop = extrude_loop3(use.obj, tr, shell, use.dir).end;
+    auto end_loop =
+      extrude_loop4(use.obj, shell, use.dir, edge_extrusions).end;
     add_use(end, use.dir, end_loop);
   }
   auto middle = new_volume2(shell);
   return Extruded{middle, end};
+}
+
+Extruded extrude_face_group(ObjPtr face_group, Transform tr) {
+  auto closure = get_closure(face_group, 0);
+  auto start_points = filter_points(closure);
+  auto start_edges = filter_by_dim(closure, 1);
+  auto point_extrusions = extrude_points(start_points, tr);
+  auto edge_extrusions = extrude_edges(start_edges, tr, point_extrusions);
+  std::vector<Extruded> face_extrusions;
+  for (auto use : face_group->used) {
+    face_extrusions.push_back(extrude_face3(use.obj, edge_extrusions));
+  }
+  for (auto obj : start_points) obj->scratch = -1;
+  for (auto obj : start_edges) obj->scratch = -1;
+  auto volume_group = new_group();
+  auto end_face_group = new_group();
+  for (auto ext : face_extrusions) {
+    add_to_group(volume_group, ext.middle);
+    add_to_group(end_face_group, ext.end);
+  }
+  return Extruded{volume_group, end_face_group};
 }
 
 ObjPtr face_loop(ObjPtr face) { return face->used[0].obj; }

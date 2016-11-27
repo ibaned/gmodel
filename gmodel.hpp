@@ -83,6 +83,7 @@ void write_closure_to_dmg(ObjPtr obj, char const* filename);
 void add_use(ObjPtr by, int dir, ObjPtr of);
 void add_helper(ObjPtr to, ObjPtr h);
 std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers);
+std::vector<ObjPtr> filter_by_dim(std::vector<ObjPtr> const& objs, int dim);
 
 struct Vector {
   double x, y, z;
@@ -174,6 +175,7 @@ PointPtr new_point();
 PointPtr new_point2(Vector v);
 PointPtr new_point3(Vector v, double size);
 std::vector<PointPtr> new_points(std::vector<Vector> vs);
+std::vector<PointPtr> filter_points(std::vector<ObjPtr> const& objs);
 
 void print_point(FILE* f, PointPtr p);
 
@@ -245,6 +247,8 @@ ObjPtr new_ruled2(ObjPtr loop);
 void add_hole_to_face(ObjPtr face, ObjPtr loop);
 Extruded extrude_face(ObjPtr face, Vector v);
 Extruded extrude_face2(ObjPtr face, Transform tr);
+Extruded extrude_face3(ObjPtr face, std::vector<Extruded> const& edge_extrusions);
+Extruded extrude_face_group(ObjPtr face_group, Transform tr);
 ObjPtr face_loop(ObjPtr face);
 
 ObjPtr new_shell();
