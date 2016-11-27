@@ -217,6 +217,7 @@ ObjPtr new_loop();
 std::vector<PointPtr> loop_points(ObjPtr loop);
 Extruded extrude_loop(ObjPtr start, Vector v);
 Extruded extrude_loop2(ObjPtr start, Vector v, ObjPtr shell, int shell_dir);
+Extruded extrude_loop3(ObjPtr start, Transform tr, ObjPtr shell, int shell_dir);
 
 ObjPtr new_circle(Vector center, Vector normal, Vector x);
 ObjPtr new_ellipse3(Vector center, Vector major, Vector minor);

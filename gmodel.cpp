@@ -468,17 +468,21 @@ Extruded extrude_loop(ObjPtr start, Vector v) {
 }
 
 Extruded extrude_loop2(ObjPtr start, Vector v, ObjPtr shell, int shell_dir) {
+  return extrude_loop3(start, [=](Vector a){return a + v;}, shell, shell_dir);
+}
+
+Extruded extrude_loop3(ObjPtr start, Transform tr, ObjPtr shell, int shell_dir) {
   ObjPtr end = new_loop();
   std::vector<PointPtr> start_points = loop_points(start);
   int n = size(start_points);
   std::vector<Extruded> point_extrusions;
   for (auto start_point : start_points)
-    point_extrusions.push_back(extrude_point(start_point, v));
+    point_extrusions.push_back(extrude_point2(start_point, tr));
   std::vector<Extruded> edge_extrusions;
   for (int i = 0; i < n; ++i) {
     auto use = at(start->used, i);
     edge_extrusions.push_back(
-        extrude_edge2(use.obj, v, at(point_extrusions, (i + (use.dir ^ 0)) % n),
+        extrude_edge3(use.obj, tr, at(point_extrusions, (i + (use.dir ^ 0)) % n),
                       at(point_extrusions, (i + (use.dir ^ 1)) % n)));
   }
   for (int i = 0; i < n; ++i)
