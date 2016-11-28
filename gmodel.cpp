@@ -914,4 +914,31 @@ ObjPtr collect_assembly_boundary(ObjPtr assembly) {
   return boundary;
 }
 
+void unscramble_loop(ObjPtr loop) {
+  std::multimap<ObjPtr, Use> lookup;
+  for (auto use : loop->used) {
+    lookup.insert(std::make_pair(edge_point(use.obj, 0), Use{FORWARD, use.obj}));
+    lookup.insert(std::make_pair(edge_point(use.obj, 1), Use{REVERSE, use.obj}));
+  }
+  std::vector<Use> new_uses;
+  new_uses.push_back(loop->used[0]);
+  while (new_uses.size() < loop->used.size()) {
+    auto use = new_uses.back();
+    auto point = edge_point(use.obj, 1 - use.dir);
+    for (auto it = lookup.lower_bound(point); it != lookup.upper_bound(point); ++it) {
+      if (it->second.obj != use.obj) new_uses.push_back(it->second);
+    }
+  }
+  loop->used = new_uses;
+}
+
+void weld_half_shell_onto(ObjPtr volume, ObjPtr big_face,
+    ObjPtr half_shell, int dir) {
+  auto loop = collect_assembly_boundary(half_shell);
+  unscramble_loop(loop);
+  add_use(big_face, REVERSE, loop);
+  auto vshell = volume_shell(volume);
+  for (auto use : half_shell->used) add_use(vshell, use.dir ^ dir, use.obj);
+}
+
 }  // end namespace gmod

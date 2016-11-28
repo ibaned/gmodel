@@ -284,6 +284,11 @@ ObjPtr copy_closure(ObjPtr object);
 
 ObjPtr collect_assembly_boundary(ObjPtr assembly);
 
+void unscramble_loop(ObjPtr loop);
+
+void weld_half_shell_onto(ObjPtr volume, ObjPtr big_face,
+    ObjPtr half_shell, int dir);
+
 }  // end namespace gmod
 
 static inline gmod::Vector operator+(gmod::Vector a, gmod::Vector b) {
