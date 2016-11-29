@@ -8,7 +8,7 @@ include(CTest)
 enable_testing()
 
 set(GMOD_MAJOR "2")
-set(GMOD_MINOR "0")
+set(GMOD_MINOR "1")
 set(GMOD_PATCH "0")
 
 option(GMOD_OPTIMIZE "Compile with optimization" ON)
