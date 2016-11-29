@@ -56,6 +56,7 @@ struct Object {
   int id;
   std::vector<Use> used;
   std::vector<ObjPtr> helpers;
+  std::vector<ObjPtr> embedded;
   int scratch;
   Object(int type);
   virtual ~Object();
@@ -82,7 +83,8 @@ void write_closure_to_dmg(ObjPtr obj, char const* filename);
 
 void add_use(ObjPtr by, int dir, ObjPtr of);
 void add_helper(ObjPtr to, ObjPtr h);
-std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers);
+std::vector<ObjPtr> get_closure(ObjPtr obj, bool include_helpers,
+    bool include_embedded = false);
 std::vector<ObjPtr> filter_by_dim(std::vector<ObjPtr> const& objs, int dim);
 
 struct Vector {
@@ -195,6 +197,7 @@ PointPtr edge_point(ObjPtr edge, int i);
 ObjPtr new_line();
 ObjPtr new_line2(PointPtr start, PointPtr end);
 ObjPtr new_line3(Vector origin, Vector span);
+ObjPtr new_line4(Vector a, Vector b);
 
 ObjPtr new_arc();
 ObjPtr new_arc2(PointPtr start, PointPtr center, PointPtr end);
@@ -288,6 +291,8 @@ void unscramble_loop(ObjPtr loop);
 
 void weld_half_shell_onto(ObjPtr volume, ObjPtr big_face,
     ObjPtr half_shell, int dir);
+
+void embed(ObjPtr into, ObjPtr embedded);
 
 }  // end namespace gmod
 

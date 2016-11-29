@@ -47,6 +47,12 @@ int const type_dims[NTYPES] = {
     /* SHELL   = */ -1,
     /* GROUP   = */ -1};
 
+char const* const dim_names[4] = {
+    "Point",
+    "Line",
+    "Surface",
+    "Volume"};
+
 template <typename T>
 static T& at(std::vector<T>& v, int i) {
   return v.at(std::size_t(i));
@@ -129,9 +135,9 @@ void print_object_physical(FILE* f, ObjPtr obj) {
 }
 
 void print_closure(FILE* f, ObjPtr obj) {
-  auto closure = get_closure(obj, 1);
+  auto closure = get_closure(obj, true, true);
   for (auto co : closure) print_object(f, co);
-  closure = get_closure(obj, 0);
+  closure = get_closure(obj, false, true);
   for (auto co : closure) print_object_physical(f, co);
 }
 
@@ -142,7 +148,7 @@ void write_closure_to_geo(ObjPtr obj, char const* filename) {
 }
 
 void print_simple_object(FILE* f, ObjPtr obj) {
-  fprintf(f, "%s(%u) = {", type_names[obj->type], obj->id);
+  fprintf(f, "%s(%d) = {", type_names[obj->type], obj->id);
   bool first = true;
   for (auto use : obj->used) {
     if (!first) fprintf(f, ",");
@@ -153,6 +159,11 @@ void print_simple_object(FILE* f, ObjPtr obj) {
     if (first) first = false;
   }
   fprintf(f, "};\n");
+  for (auto emb : obj->embedded) {
+    fprintf(f, "%s{%d} In %s{%d};\n",
+        dim_names[type_dims[emb->type]], emb->id,
+        dim_names[type_dims[obj->type]], obj->id);
+  }
 }
 
 void print_object_dmg(FILE* f, ObjPtr obj) {
@@ -202,12 +213,15 @@ int count_of_dim(std::vector<ObjPtr> const& objs, int dim) {
 }
 
 void print_closure_dmg(FILE* f, ObjPtr obj) {
-  auto closure = get_closure(obj, 0);
+  auto closure = get_closure(obj, false, true);
   fprintf(f, "%u %u %u %u\n", count_of_dim(closure, 3),
           count_of_dim(closure, 2), count_of_dim(closure, 1),
           count_of_dim(closure, 0));
   fprintf(f, "0 0 0\n0 0 0\n");
-  for (auto co : closure) print_object_dmg(f, co);
+  for (int d = 0; d <= 3; ++d) {
+    auto d_objs = filter_by_dim(closure, d);
+    for (auto d_obj : d_objs) print_object_dmg(f, d_obj);
+  }
 }
 
 void write_closure_to_dmg(ObjPtr obj, char const* filename) {
@@ -222,7 +236,8 @@ void add_use(ObjPtr by, int dir, ObjPtr of) {
 
 void add_helper(ObjPtr to, ObjPtr h) { to->helpers.push_back(h); }
 
-std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers) {
+std::vector<ObjPtr> get_closure(ObjPtr obj, bool include_helpers,
+    bool include_embedded) {
   std::vector<ObjPtr> queue;
   queue.reserve(std::size_t(nlive_objects));
   std::size_t first = 0;
@@ -236,13 +251,22 @@ std::vector<ObjPtr> get_closure(ObjPtr obj, int include_helpers) {
         queue.push_back(child);
       }
     }
-    if (include_helpers)
+    if (include_helpers) {
       for (auto child : current->helpers) {
         if (child->scratch == -1) {
           child->scratch = 1;
           queue.push_back(child);
         }
       }
+    }
+    if (include_embedded) {
+      for (auto child : current->embedded) {
+        if (child->scratch == -1) {
+          child->scratch = 1;
+          queue.push_back(child);
+        }
+      }
+    }
   }
   for (std::size_t i = 0; i < queue.size(); ++i) queue[i]->scratch = -1;
   std::reverse(queue.begin(), queue.end());
@@ -334,6 +358,10 @@ ObjPtr new_line2(PointPtr start, PointPtr end) {
 
 ObjPtr new_line3(Vector origin, Vector span) {
   return extrude_point(new_point2(origin), span).middle;
+}
+
+ObjPtr new_line4(Vector a, Vector b) {
+  return new_line3(a, b - a);
 }
 
 ObjPtr new_arc() { return new_object(ARC); }
@@ -629,7 +657,7 @@ Extruded extrude_face(ObjPtr face, Vector v) {
 }
 
 Extruded extrude_face2(ObjPtr face, Transform tr) {
-  auto closure = get_closure(face, 0);
+  auto closure = get_closure(face, false, true);
   auto start_points = filter_points(closure);
   auto start_edges = filter_by_dim(closure, 1);
   auto point_extrusions = extrude_points(start_points, tr);
@@ -667,7 +695,7 @@ Extruded extrude_face3(ObjPtr face, std::vector<Extruded> const& edge_extrusions
 }
 
 Extruded extrude_face_group(ObjPtr face_group, Transform tr) {
-  auto closure = get_closure(face_group, 0);
+  auto closure = get_closure(face_group, false, true);
   auto start_points = filter_points(closure);
   auto start_edges = filter_by_dim(closure, 1);
   auto point_extrusions = extrude_points(start_points, tr);
@@ -845,7 +873,7 @@ Vector eval(ObjPtr o, double const* param) {
 }
 
 void transform_closure(ObjPtr object, Matrix linear, Vector translation) {
-  auto closure = get_closure(object, 1);
+  auto closure = get_closure(object, true, true);
   for (auto co : closure) {
     if (co->type == POINT) {
       auto pt = std::dynamic_pointer_cast<Point>(co);
@@ -866,7 +894,7 @@ static ObjPtr copy_object(ObjPtr object) {
 }
 
 ObjPtr copy_closure(ObjPtr object) {
-  auto closure = get_closure(object, 1);
+  auto closure = get_closure(object, true, true);
   for (size_t i = 0; i < closure.size(); ++i) closure[i]->scratch =
     static_cast<int>(i);
   decltype(closure) out_closure;
@@ -939,6 +967,10 @@ void weld_half_shell_onto(ObjPtr volume, ObjPtr big_face,
   add_use(big_face, REVERSE, loop);
   auto vshell = volume_shell(volume);
   for (auto use : half_shell->used) add_use(vshell, use.dir ^ dir, use.obj);
+}
+
+void embed(ObjPtr into, ObjPtr embedded) {
+  into->embedded.push_back(embedded);
 }
 
 }  // end namespace gmod
