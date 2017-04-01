@@ -774,12 +774,10 @@ ObjPtr new_ball(Vector center, Vector normal, Vector x) {
 void insert_into(ObjPtr into, ObjPtr o) {
   if (is_face(o->type)) {
     assert(is_face(into->type));
-    for (auto& use : o->used)
-      add_use(into, REVERSE, use.obj);
+    add_use(into, REVERSE, face_loop(o));
   } else if (o->type == VOLUME) {
     assert(into->type == VOLUME);
-    for (auto& use : o->used)
-      add_use(into, REVERSE, use.obj);
+    add_use(into, REVERSE, volume_shell(o));
   } else if (o->type == GROUP) {
     auto boundary = collect_assembly_boundary(o);
     assert(boundary->type == get_boundary_type(into->type));
