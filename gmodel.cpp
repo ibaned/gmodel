@@ -801,6 +801,18 @@ void weld_volume_face_into(ObjPtr big_volume, ObjPtr small_volume,
           small_volume_face);
 }
 
+void weld_plane_with_holes_into(ObjPtr big_volume, ObjPtr small_volume,
+                           ObjPtr big_volume_face, ObjPtr small_volume_face) {
+  weld_volume_face_into(big_volume, small_volume, big_volume_face, small_volume_face);
+  for (size_t i = 1; i < small_volume_face->used.size(); ++i) {
+    auto hole_loop = small_volume_face->used[i].obj;
+    auto hole_plug = new_plane2(hole_loop);
+    add_use(volume_shell(big_volume),
+        !(get_used_dir(volume_shell(small_volume), small_volume_face)),
+        hole_plug);
+  }
+}
+
 static int are_parallel(Vector a, Vector b) {
   return 1e-6 >
          (1.0 - fabs(dot_product(normalize_vector(a), normalize_vector(b))));

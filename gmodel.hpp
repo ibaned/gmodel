@@ -278,6 +278,8 @@ void add_to_group(ObjPtr group, ObjPtr o);
 
 void weld_volume_face_into(ObjPtr big_volume, ObjPtr small_volume,
                            ObjPtr big_volume_face, ObjPtr small_volume_face);
+void weld_plane_with_holes_into(ObjPtr big_volume, ObjPtr small_volume,
+                           ObjPtr big_volume_face, ObjPtr small_volume_face);
 
 Vector eval(ObjPtr o, double const* param);
 
