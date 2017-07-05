@@ -624,6 +624,29 @@ ObjPtr new_plane2(ObjPtr loop) {
   return p;
 }
 
+Vector plane_normal(ObjPtr plane, double epsilon) {
+  auto loop = face_loop(plane);
+  auto pts = loop_points(loop);
+  Vector vectors[2];
+  size_t i;
+  for (i = 1; i < pts.size(); ++i) {
+    vectors[0] = pts[i]->pos - pts[0]->pos;
+    if (vector_norm(vectors[0]) >= epsilon) break;
+  }
+  Vector normal;
+  size_t j;
+  for (j = 1; i < pts.size(); ++i) {
+    if (j == i) continue;
+    vectors[1] = pts[i]->pos - pts[0]->pos;
+    if (vector_norm(vectors[1]) < epsilon) continue;
+    normal = cross_product(vectors[0], vectors[1]);
+    if (vector_norm(normal) >= epsilon) {
+      return normalize_vector(normal);
+    }
+  }
+  return {0,0,0};
+}
+
 ObjPtr new_square(Vector origin, Vector x, Vector y) {
   return extrude_edge(new_line3(origin, x), y).middle;
 }

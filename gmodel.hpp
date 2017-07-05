@@ -238,6 +238,7 @@ ObjPtr new_polyline2(std::vector<Vector> const& vs);
 
 ObjPtr new_plane();
 ObjPtr new_plane2(ObjPtr loop);
+Vector plane_normal(ObjPtr plane, double epsilon = 1e-10);
 
 ObjPtr new_square(Vector origin, Vector x, Vector y);
 ObjPtr new_disk(Vector center, Vector normal, Vector x);
