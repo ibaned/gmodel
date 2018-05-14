@@ -30,9 +30,9 @@ char const* const physical_type_names[NTYPES] = {
     /* PLANE   = */ "Physical Surface",
     /* RULED   = */ "Physical Surface",
     /* VOLUME  = */ "Physical Volume",
-    /* LOOP    = */ 0,
-    /* SHELL   = */ 0,
-    /* GROUP   = */ 0};
+    /* LOOP    = */ nullptr,
+    /* SHELL   = */ nullptr,
+    /* GROUP   = */ nullptr};
 
 int const type_dims[NTYPES] = {
     /* POINT   = */ 0,
@@ -61,11 +61,6 @@ static T& at(std::vector<T>& v, int i) {
 template <typename T>
 static T const& at(std::vector<T> const& v, int i) {
   return v.at(std::size_t(i));
-}
-
-template <typename T>
-static int size(std::vector<T> const& v) {
-  return int(v.size());
 }
 
 int is_entity(int t) { return t <= VOLUME; }
