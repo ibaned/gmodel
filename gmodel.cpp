@@ -447,7 +447,7 @@ Extruded extrude_edge3(ObjPtr start, Transform tr, Extruded left, Extruded right
   auto loop = new_loop();
   add_use(loop, FORWARD, start);
   add_use(loop, FORWARD, right.middle);
-  ObjPtr end = 0;
+  ObjPtr end = nullptr;
   switch (start->type) {
     case LINE: {
       end = new_line2(std::dynamic_pointer_cast<Point>(left.end),
@@ -487,7 +487,7 @@ Extruded extrude_edge3(ObjPtr start, Transform tr, Extruded left, Extruded right
       break;
     }
     default:
-      end = 0;
+      end = nullptr;
       break;
   }
   add_use(loop, REVERSE, end);
@@ -503,7 +503,7 @@ Extruded extrude_edge3(ObjPtr start, Transform tr, Extruded left, Extruded right
       middle = new_ruled2(loop);
       break;
     default:
-      middle = 0;
+      middle = nullptr;
       break;
   }
   return Extruded{middle, end};
