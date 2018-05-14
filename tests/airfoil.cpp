@@ -85,9 +85,9 @@ int main(int argc, char** argv)
   auto sq = gmod::new_square(origin,xlim,ylim);
 
   gmod::add_hole_to_face(sq,l);
-  //auto r = gmod::extrude_face(sq, gmod::Vector{0,0,.3}).middle;
+  auto r = gmod::extrude_face(sq, gmod::Vector{0,0,.3}).middle;
 
-  write_closure_to_geo(sq,geo.c_str());
-  write_closure_to_dmg(sq,dmg.c_str());
+  write_closure_to_geo(r,geo.c_str());
+  write_closure_to_dmg(r,dmg.c_str());
   return 0;
 }
