@@ -7,7 +7,9 @@
 #include <sstream>
 #include <float.h>
 
-bool readFileCoords(std::string filePath, std::vector<float>& buffer) {
+bool readFileCoords(std::string filePath, std::vector<double>& buffer);
+
+bool readFileCoords(std::string filePath, std::vector<double>& buffer) {
     std::ifstream file(filePath, std::ios::binary);
     if (file.fail()) {
       perror(filePath.c_str());
@@ -18,7 +20,7 @@ bool readFileCoords(std::string filePath, std::vector<float>& buffer) {
         continue;
       std::istringstream in(line);
       std::string type;
-      float x, y;
+      double x, y;
       in >> x >> y;
       buffer.push_back(x);
       buffer.push_back(y);
@@ -34,37 +36,42 @@ int main(int argc, char** argv)
   std::string geo = std::string(argv[2]) + ".geo";
   std::string dmg = std::string(argv[2]) + ".dmg";
 
-  std::vector<float> xy;
+  std::vector<double> xy;
   bool read = readFileCoords(in, xy);
   assert(read);
 
-  gmod::PointPtr minXPt;
-  gmod::PointPtr maxXPt;
-  minXPt = spline_pts.front();
-  maxXPt = spline_pts.front();
-  for( auto& pt : spline_pts ) {
-    auto a = gmod::new_point2(gmod::Vector{xy[i],xy[i+1],0});
-    if( pt->pos.x > maxXPt->pos.x )
-      maxXPt = pt;
-    if( pt->pos.x < minXPt->pos.x )
-      minXPt = pt;
-  }
-  printf("minX (%f,%d) maxX (%f,%d)\n",
-      minXPt->pos.x, minXPt->id,
-      maxXPt->pos.x, maxXPt->id);
-
+  // gather the points with +y, top, and -y, bottom, coords
+  // skip the coords with y=0, we'll add those later
   auto spline_pts_top = std::vector<gmod::PointPtr>();
   auto spline_pts_bot = std::vector<gmod::PointPtr>();
-  for(size_t i=2; i<xy.size(); i+=2) {
+  auto spline_pts_zero = std::vector<gmod::PointPtr>();
+  for(size_t i=0; i<xy.size(); i+=2) {
     auto a = gmod::new_point2(gmod::Vector{xy[i],xy[i+1],0});
-    if( xy[i+1] == 0 ) {
+    if( xy[i+1] > 0 )
       spline_pts_top.push_back(a);
+    if( xy[i+1] < 0 )
       spline_pts_bot.push_back(a);
-    } else if( xy[i+1] > 0 ) {
-      spline_pts_top.push_back(a);
-    } else
-      spline_pts_bot.push_back(a);
+    else
+      spline_pts_zero.push_back(a);
   }
+
+  gmod::PointPtr leading;
+  gmod::PointPtr trailing;
+  leading = spline_pts_zero.front();
+  trailing = spline_pts_zero.front();
+  for( auto& pt : spline_pts_zero ) {
+    if( pt->pos.x > trailing->pos.x )
+      trailing = pt;
+    if( pt->pos.x < leading->pos.x )
+      leading = pt;
+  }
+  printf("leading (%f,%d) trailing (%f,%d)\n",
+      leading->pos.x, leading->id,
+      trailing->pos.x, trailing->id);
+  spline_pts_top.insert(spline_pts_top.begin(),trailing);
+  spline_pts_top.push_back(leading);
+  spline_pts_bot.insert(spline_pts_bot.begin(),leading);
+  spline_pts_bot.push_back(trailing);
 
   auto l = gmod::new_loop();
   auto spline_bot = gmod::new_spline2(spline_pts_bot);
