@@ -166,7 +166,7 @@ struct Point : public Object {
   Vector pos;
   double size;
   Point();
-  ~Point();
+  ~Point() override;
 };
 
 typedef std::shared_ptr<Point> PointPtr;
